@@ -3,6 +3,7 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include <set>
 
 template <typename T>
 class TD;
@@ -93,19 +94,84 @@ auto sim_pearson(const PreferenceMMapT & prefs, const string& person1, const str
 // Returns the best matches for person from the prefs dictionary.
 // Number of results and similarity function are optional params.
 auto topMatches(const PreferenceMMapT & prefs,
-        const string& person)//,
-//        function<double(
-//                const PreferenceMMapT & prefs,
-//                const string& person1,
-//                const string& person2)> similarity=sim_pearson)
+        const string &person,
+        function<double(
+                const PreferenceMMapT,
+                const string &person1,
+                const string &person2)> similarity = sim_pearson)
 {
     std::map<double, string, greater<double> > scores;
-    for_each(prefs.cbegin(), prefs.cend(), [&prefs, &scores](auto& pref){
+    for_each(prefs.cbegin(), prefs.cend(), [&prefs, &scores, &similarity](auto &pref) {
         if (pref.first != "Toby")
-            scores.insert(make_pair(sim_pearson(prefs, pref.first, "Toby"), pref.first));
+            scores.insert(make_pair(similarity(prefs, pref.first, "Toby"), pref.first));
     });
     return scores;
 }
+
+auto all_names(const PreferenceMMapT &prefs) {
+    set<string> names;
+    for (auto &pref : prefs) {
+        names.insert(pref.first);
+    }
+    return names;
+}
+
+auto all_movies(const PreferenceMMapT &prefs, const string person) {
+    set<string> movies;
+    auto p = prefs.equal_range(person);
+
+    for (auto it = p.first; it != p.second; ++it) {
+        movies.insert(it->second.first);
+    }
+    return movies;
+}
+
+// Gets recommendations for a person by using a weighted average
+// of every other user's rankings
+auto getRecommendations(const PreferenceMMapT &prefs,
+        const string &person,
+        function<double(
+                const PreferenceMMapT,
+                const string &person1,
+                const string &person2)> similarity = sim_pearson) {
+    auto names = all_names(prefs);
+    map<string, double> totals;
+    map<string, double> simSums;
+    auto personprefs = prefs.equal_range(person);
+    auto personmovies = all_movies(prefs, person);
+
+    for (auto &name:names) {
+        if (name != person) // don't compare me to myself
+        {
+            auto sim = similarity(prefs, person, name);
+            // ignore scores of zero or lower
+            if (sim > 0) {
+
+                auto namedprefs = prefs.equal_range(name);
+                for (auto it = namedprefs.first; it != namedprefs.second; ++it) {
+
+                    // only score movies I haven't seen yet
+                    if (personmovies.find(it->second.first) == personmovies.cend()) {
+                        // Similarity * Score
+                        totals[it->second.first] += it->second.second * sim;
+                        //Sum of similarities
+                        simSums[it->second.first] += sim;
+                    }
+
+                }
+            }
+
+        }
+    }
+    // Create the normalized list
+    map<double, string, greater<double>> rankings;
+    for (auto &item : totals) {
+        rankings[item.second / simSums[item.first]] = item.first;
+    }
+    //# Return the inverse sorted list
+    return rankings;
+}
+
 
 int main() {
 
@@ -146,12 +212,20 @@ int main() {
            {"Toby", {"You, Me and Dupree", 1.0}},
            {"Toby", {"Superman Returns", 4.0}}};
 
-    cout << sim_distance(critics, "Lisa Rose", "Gene Seymour") << endl;
-    cout << sim_pearson(critics, "Lisa Rose", "Gene Seymour") << endl;
-    auto scores = topMatches(critics,"Toby");
-    for_each(scores.cbegin(), scores.cend(), [](auto& score){
-        cout << score.first << ", " << score.second << endl;
+//    cout << sim_distance(critics, "Lisa Rose", "Gene Seymour") << endl;
+//
+//    cout << sim_pearson(critics, "Lisa Rose", "Gene Seymour") << endl;
+//
+//    auto scores = topMatches(critics,"Toby", sim_distance);
+//    for_each(scores.cbegin(), scores.cend(), [](auto& score){
+//        cout << score.first << ", " << score.second << endl;
+//    });
+
+    auto rankings = getRecommendations(critics, "Toby", sim_pearson);
+    for_each(rankings.cbegin(), rankings.cend(), [](auto &rank) {
+        cout << rank.first << ", " << rank.second << endl;
     });
+
     return 0;
 }
 
