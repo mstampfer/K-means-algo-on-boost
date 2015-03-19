@@ -10,13 +10,13 @@ class TD;
 
 
 using namespace std;
-using PreferenceT = const pair<const string, const float>;
+using PreferenceT =  pair<const string, const float>;
 using PreferencePairT = pair<const string, PreferenceT>;
-using PreferenceMMapT = const multimap<const string, PreferenceT>;
+using PreferenceMMapT = multimap<const string, PreferenceT>;
 using CommonPrefMapT = multimap<string, pair<float,float>>;
 
 
-auto find_common(PreferenceMMapT & prefs, const string& person1, const string& person2) {
+auto find_common(const PreferenceMMapT &prefs, const string &person1, const string &person2) {
     CommonPrefMapT common_items;
     const auto p1_items = prefs.equal_range(person1);
     const auto p2_items = prefs.equal_range(person2);
@@ -35,7 +35,7 @@ auto find_common(PreferenceMMapT & prefs, const string& person1, const string& p
     return common_items;
 }
 
-auto sim_distance(PreferenceMMapT & prefs,
+auto sim_distance(const PreferenceMMapT &prefs,
         const string& person1,
         const string& person2)
 {
@@ -101,9 +101,9 @@ auto topMatches(const PreferenceMMapT & prefs,
                 const string &person2)> similarity = sim_pearson)
 {
     std::map<double, string, greater<double> > scores;
-    for_each(prefs.cbegin(), prefs.cend(), [&prefs, &scores, &similarity](auto &pref) {
-        if (pref.first != "Toby")
-            scores.insert(make_pair(similarity(prefs, pref.first, "Toby"), pref.first));
+    for_each(prefs.cbegin(), prefs.cend(), [&prefs, &scores, &similarity, &person](auto &pref) {
+        if (pref.first != person)
+            scores.insert(make_pair(similarity(prefs, pref.first, person), pref.first));
     });
     return scores;
 }
@@ -172,6 +172,14 @@ auto getRecommendations(const PreferenceMMapT &prefs,
     return rankings;
 }
 
+auto transformPrefs(const PreferenceMMapT &prefs) {
+    PreferenceMMapT result;
+    for (auto &pref : prefs) {
+        result.insert(make_pair(pref.second.first,
+                make_pair(pref.first, pref.second.second)));
+    }
+    return result;
+}
 
 int main() {
 
@@ -221,9 +229,15 @@ int main() {
 //        cout << score.first << ", " << score.second << endl;
 //    });
 
-    auto rankings = getRecommendations(critics, "Toby", sim_pearson);
-    for_each(rankings.cbegin(), rankings.cend(), [](auto &rank) {
-        cout << rank.first << ", " << rank.second << endl;
+//    auto rankings = getRecommendations(critics, "Toby", sim_pearson);
+//    for_each(rankings.cbegin(), rankings.cend(), [](auto &rank) {
+//        cout << rank.first << ", " << rank.second << endl;
+//    });
+
+    auto movies = transformPrefs(critics);
+    auto topMatch = topMatches(movies, "Superman Returns");
+    for_each(topMatch.cbegin(), topMatch.cend(), [](auto &score) {
+        cout << score.first << ", " << score.second << endl;
     });
 
     return 0;
