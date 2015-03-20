@@ -10,10 +10,10 @@ class TD;
 
 
 using namespace std;
-using PreferenceT =  pair<const string, const float>;
+using PreferenceT =  pair<const string, const double>;
 using PreferencePairT = pair<const string, PreferenceT>;
 using PreferenceMMapT = multimap<const string, PreferenceT>;
-using CommonPrefMapT = multimap<string, pair<float,float>>;
+using CommonPrefMapT = multimap<string, pair<double, double>>;
 
 
 auto find_common(const PreferenceMMapT &prefs, const string &person1, const string &person2) {
@@ -100,7 +100,7 @@ auto topMatches(const PreferenceMMapT & prefs,
                 const string &person1,
                 const string &person2)> similarity = sim_pearson)
 {
-    std::map<double, string, greater<double> > scores;
+    map<double, string, greater<double>> scores;
     for_each(prefs.cbegin(), prefs.cend(), [&prefs, &scores, &similarity, &person](auto &pref) {
         if (pref.first != person)
             scores.insert(make_pair(similarity(prefs, pref.first, person), pref.first));
@@ -181,6 +181,26 @@ auto transformPrefs(const PreferenceMMapT &prefs) {
     return result;
 }
 
+auto calculateSimilarItems(const PreferenceMMapT &prefs, int n = 10) {
+// Create a dictionary of items showing which other items they are most similar to.
+    multimap<string, pair<double, string>> result;
+// Invert the preference matrix to be item-centric
+    auto itemPrefs = transformPrefs(prefs);
+    int c = 0;
+    for (auto &item : itemPrefs) {
+// Status updates for large datasets
+        ++c;
+        if (c % 100 == 0.0)
+            cout << c << "/" << itemPrefs.size() << endl;
+// Find the most similar items to this one
+        auto scores = topMatches(itemPrefs, item.first, sim_distance);
+        for (auto &score : scores) {
+            result.insert(make_pair(item.first, score));
+        }
+    }
+    return result;
+}
+
 int main() {
 
    const PreferenceMMapT critics = {
@@ -234,12 +254,16 @@ int main() {
 //        cout << rank.first << ", " << rank.second << endl;
 //    });
 
-    auto movies = transformPrefs(critics);
-    auto topMatch = topMatches(movies, "Superman Returns");
-    for_each(topMatch.cbegin(), topMatch.cend(), [](auto &score) {
-        cout << score.first << ", " << score.second << endl;
-    });
+//    auto movies = transformPrefs(critics);
+//    auto topMatch = topMatches(movies, "Superman Returns");
+//    for_each(topMatch.cbegin(), topMatch.cend(), [](auto &score) {
+//        cout << score.first << ", " << score.second << endl;
+//    });
 
+    auto item = calculateSimilarItems(critics, 3);
+    for_each(item.cbegin(), item.cend(), [](auto &item) {
+        cout << item.first << ", " << item.second.first << ", " << item.second.second << endl;
+    });
     return 0;
 }
 
