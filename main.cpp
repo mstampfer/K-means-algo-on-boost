@@ -4,6 +4,8 @@
 #include <math.h>
 #include <vector>
 #include <set>
+#include <algorithm>
+#include <functional>
 
 template <typename T>
 class TD;
