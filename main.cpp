@@ -5,16 +5,21 @@
 #include <vector>
 #include <set>
 
+#include "pretty_printer.h"
+#include <boost/type_index.hpp>
+
 template <typename T>
 class TD;
 
 
 using namespace std;
+using boost::typeindex::type_id_with_cvr;
+
 using PreferenceT =  pair<const string, const double>;
 using PreferencePairT = pair<const string, PreferenceT>;
 using PreferenceMMapT = multimap<const string, PreferenceT>;
 using CommonPrefMapT = multimap<string, pair<double, double>>;
-
+using SimilarityPrefMapT = multimap<const string, pair<double, string>>;
 
 auto find_common(const PreferenceMMapT &prefs, const string &person1, const string &person2) {
     CommonPrefMapT common_items;
@@ -183,7 +188,7 @@ auto transformPrefs(const PreferenceMMapT &prefs) {
 
 auto calculateSimilarItems(const PreferenceMMapT &prefs, int n = 10) {
 // Create a dictionary of items showing which other items they are most similar to.
-    multimap<string, pair<double, string>> result;
+    SimilarityPrefMapT result;
 // Invert the preference matrix to be item-centric
     auto itemPrefs = transformPrefs(prefs);
     int c = 0;
@@ -200,6 +205,52 @@ auto calculateSimilarItems(const PreferenceMMapT &prefs, int n = 10) {
     }
     return result;
 }
+
+auto getRecommendedItems(const PreferenceMMapT &prefs,
+        const SimilarityPrefMapT &itemMatch,
+        const string &user) {
+    map<string, double> scores;
+    map<string, double> totalSim;
+
+    // Return the rankings from highest to lowest rankings.sort( )
+    map<double, string, greater<double>> rankings;
+
+    auto userRatingsMap = prefs.equal_range(user);
+    auto usermovies = all_movies(prefs, user);
+
+
+    // Loop over items rated by this user
+    for (auto userRating = userRatingsMap.first; userRating != userRatingsMap.second; ++userRating) {
+        auto item = userRating->second.first;
+        auto rating = userRating->second.second;
+
+        // Loop over items similar to this one
+        auto similarityMap = itemMatch.equal_range(item);
+        for (auto similarityRating = similarityMap.first; similarityRating != similarityMap.second; ++similarityRating) {
+            auto similarity = similarityRating->second.first;
+            auto item2 = similarityRating->second.second;
+
+            // Ignore if this user has already rated this item
+            if (usermovies.find(item2) == usermovies.cend()) {
+
+                // Weighted sum of rating times similarity
+                scores[item2] += similarity * rating;
+
+                // Sum of all the similarities
+                totalSim[item2] += similarity;
+            }
+        }
+
+        // Divide each total score by total weighting to get an average
+        for (auto &score : scores) {
+            auto item = score.first;
+            auto rank = score.second;
+            rankings.insert(make_pair(rank / totalSim[item], item));
+        }
+    }
+    return rankings;
+}
+
 
 int main() {
 
@@ -260,10 +311,17 @@ int main() {
 //        cout << score.first << ", " << score.second << endl;
 //    });
 
-    auto item = calculateSimilarItems(critics, 3);
-    for_each(item.cbegin(), item.cend(), [](auto &item) {
+
+    auto itemsIm = calculateSimilarItems(critics, 3);
+    for_each(itemsIm.cbegin(), itemsIm.cend(), [](auto &item) {
         cout << item.first << ", " << item.second.first << ", " << item.second.second << endl;
     });
+
+//    auto rankings = getRecommendedItems(critics, itemsIm, "Toby" );
+//    for(auto& ranking : rankings)
+//    {
+//        cout << ranking.first << " " <<  ranking.second << " " << endl;
+//    }
     return 0;
 }
 
