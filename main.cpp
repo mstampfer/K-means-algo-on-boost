@@ -6,16 +6,13 @@
 #include <set>
 #include <algorithm>
 #include <functional>
-
-#include "pretty_printer.h"
-#include <boost/type_index.hpp>
+#include <fstream>
+#include <regex>
 
 template <typename T>
 class TD;
 
-
 using namespace std;
-using boost::typeindex::type_id_with_cvr;
 
 using PreferenceT =  pair<const string, const double>;
 using PreferencePairT = pair<const string, PreferenceT>;
@@ -30,11 +27,11 @@ auto find_common(const PreferenceMMapT &prefs, const string &person1, const stri
     vector<PreferencePairT> person1v(p1_items.first,p1_items.second);
     vector<PreferencePairT> person2v(p2_items.first,p2_items.second);
 
-    for(auto e1 : person1v) {
-        for(auto e2 : person2v) {
-            auto e1pair = e1.second; auto e2pair = e2.second;
+    for(const auto& e1 : person1v) {
+        for(const auto& e2 : person2v) {
+            const auto& e1pair = e1.second; const auto& e2pair = e2.second;
             if (e1pair.first == e2pair.first) {
-                auto p = make_pair(e1pair.second, e2pair.second);
+                const auto& p = make_pair(e1pair.second, e2pair.second);
                 common_items.insert(pair<string, decltype(p)>(e1.first, p));
             }
         }
@@ -47,8 +44,8 @@ auto sim_distance(const PreferenceMMapT &prefs,
         const string& person2)
 {
     auto sum_of_squares = 0.0;
-    auto common = find_common(prefs, person1, person2);
-    for_each(common.cbegin(),common.cend(),[&sum_of_squares](auto& item)
+    const auto& common = find_common(prefs, person1, person2);
+    for_each(common.cbegin(),common.cend(),[&sum_of_squares](const auto& item)
     {
         sum_of_squares += pow(item.second.first - item.second.second, 2);
     });
@@ -62,21 +59,21 @@ auto sim_distance(const PreferenceMMapT &prefs,
 auto sim_pearson(const PreferenceMMapT & prefs, const string& person1, const string& person2) {
 
 // Get the list of mutually rated items
-    auto common = find_common(prefs, person1, person2);
+    const auto& common = find_common(prefs, person1, person2);
     if (common.size() == 0.0)
         return 0.0;
 
 //       Add up all the preferences
     auto sum1=0.0, sum2=0.0;
-    for_each(common.cbegin(), common.cend(), [&sum1, &sum2](auto prefMap)
+    for_each(common.cbegin(), common.cend(), [&sum1, &sum2](const auto& prefMap)
     {
         sum1 += prefMap.second.first;
         sum2 += prefMap.second.second;
     });
 
 //       Sum up the squares
-    auto sum1Sq=0.0, sum2Sq=0.0;
-    for_each(common.cbegin(), common.cend(), [&sum1Sq, &sum2Sq](auto prefMap)
+   auto sum1Sq=0.0, sum2Sq=0.0;
+    for_each(common.cbegin(), common.cend(), [&sum1Sq, &sum2Sq](const auto& prefMap)
     {
         sum1Sq += pow(prefMap.second.first,2);
         sum2Sq += pow(prefMap.second.second,2);
@@ -84,17 +81,17 @@ auto sim_pearson(const PreferenceMMapT & prefs, const string& person1, const str
 
 //       Sum up the products
     auto pSum = 0.0;
-    for_each(common.cbegin(), common.cend(), [&pSum](auto prefMap)
+    for_each(common.cbegin(), common.cend(), [&pSum](const auto& prefMap)
     {
         pSum += prefMap.second.first*prefMap.second.second;
     });
 
 //       Calculate Pearson score
-        auto n = common.size();
-        auto num=pSum-(sum1*sum2/n);
-        auto den=sqrt((sum1Sq-pow(sum1,2)/n)*(sum2Sq-pow(sum2,2)/n));
+        const auto& n = common.size();
+        const auto& num=pSum-(sum1*sum2/n);
+        const auto& den=sqrt((sum1Sq-pow(sum1,2)/n)*(sum2Sq-pow(sum2,2)/n));
         if (den==0) return 0.0;
-        auto r=num/den;
+        const auto& r=num/den;
         return r;
 }
 
@@ -108,7 +105,7 @@ auto topMatches(const PreferenceMMapT & prefs,
                 const string &person2)> similarity = sim_pearson)
 {
     map<double, string, greater<double>> scores;
-    for_each(prefs.cbegin(), prefs.cend(), [&prefs, &scores, &similarity, &person](auto &pref) {
+    for_each(prefs.cbegin(), prefs.cend(), [&prefs, &scores, &similarity, &person](const auto& pref) {
         if (pref.first != person)
             scores.insert(make_pair(similarity(prefs, pref.first, person), pref.first));
     });
@@ -125,7 +122,7 @@ auto all_names(const PreferenceMMapT &prefs) {
 
 auto all_movies(const PreferenceMMapT &prefs, const string person) {
     set<string> movies;
-    auto p = prefs.equal_range(person);
+    const auto& p = prefs.equal_range(person);
 
     for (auto it = p.first; it != p.second; ++it) {
         movies.insert(it->second.first);
@@ -141,20 +138,20 @@ auto getRecommendations(const PreferenceMMapT &prefs,
                 const PreferenceMMapT,
                 const string &person1,
                 const string &person2)> similarity = sim_pearson) {
-    auto names = all_names(prefs);
+    const auto& names = all_names(prefs);
     map<string, double> totals;
     map<string, double> simSums;
-    auto personprefs = prefs.equal_range(person);
-    auto personmovies = all_movies(prefs, person);
+    const auto& personprefs = prefs.equal_range(person);
+    const auto& personmovies = all_movies(prefs, person);
 
     for (auto &name:names) {
         if (name != person) // don't compare me to myself
         {
-            auto sim = similarity(prefs, person, name);
+            const auto& sim = similarity(prefs, person, name);
             // ignore scores of zero or lower
             if (sim > 0) {
 
-                auto namedprefs = prefs.equal_range(name);
+                const auto& namedprefs = prefs.equal_range(name);
                 for (auto it = namedprefs.first; it != namedprefs.second; ++it) {
 
                     // only score movies I haven't seen yet
@@ -192,7 +189,7 @@ auto calculateSimilarItems(const PreferenceMMapT &prefs, int n = 10) {
 // Create a dictionary of items showing which other items they are most similar to.
     SimilarityPrefMapT result;
 // Invert the preference matrix to be item-centric
-    auto itemPrefs = transformPrefs(prefs);
+    const auto& itemPrefs = transformPrefs(prefs);
     int c = 0;
     for (auto &item : itemPrefs) {
 // Status updates for large datasets
@@ -200,7 +197,7 @@ auto calculateSimilarItems(const PreferenceMMapT &prefs, int n = 10) {
         if (c % 100 == 0.0)
             cout << c << "/" << itemPrefs.size() << endl;
 // Find the most similar items to this one
-        auto scores = topMatches(itemPrefs, item.first, sim_distance);
+        const auto& scores = topMatches(itemPrefs, item.first, sim_distance);
         for (auto &score : scores) {
             result.insert(make_pair(item.first, score));
         }
@@ -217,41 +214,79 @@ auto getRecommendedItems(const PreferenceMMapT &prefs,
     // Return the rankings from highest to lowest rankings.sort( )
     map<double, string, greater<double>> rankings;
 
-    auto userRatingsMap = prefs.equal_range(user);
-    auto usermovies = all_movies(prefs, user);
+    const auto& userRatingsMap = prefs.equal_range(user);
+    const auto& usermovies = all_movies(prefs, user);
 
 
     // Loop over items rated by this user
-    for (auto userRating = userRatingsMap.first; userRating != userRatingsMap.second; ++userRating) {
-        auto item = userRating->second.first;
-        auto rating = userRating->second.second;
+	for (auto userRating = userRatingsMap.first; userRating != userRatingsMap.second; ++userRating) {
+		const auto& item = userRating->second.first;
+		const auto& rating = userRating->second.second;
 
-        // Loop over items similar to this one
-        auto similarityMap = itemMatch.equal_range(item);
-        for (auto similarityRating = similarityMap.first; similarityRating != similarityMap.second; ++similarityRating) {
-            auto similarity = similarityRating->second.first;
-            auto item2 = similarityRating->second.second;
+		// Loop over items similar to this one
+		const auto& similarityMap = itemMatch.equal_range(item);
+		for (auto similarityRating = similarityMap.first; similarityRating != similarityMap.second; ++similarityRating) {
+			const auto& similarity = similarityRating->second.first;
+			const auto& item2 = similarityRating->second.second;
 
-            // Ignore if this user has already rated this item
-            if (usermovies.find(item2) == usermovies.cend()) {
+			// Ignore if this user has already rated this item
+			if (usermovies.find(item2) == usermovies.cend()) {
 
-                // Weighted sum of rating times similarity
-                scores[item2] += similarity * rating;
+				// Weighted sum of rating times similarity
+				scores[item2] += similarity * rating;
 
-                // Sum of all the similarities
-                totalSim[item2] += similarity;
-            }
-        }
+				// Sum of all the similarities
+				totalSim[item2] += similarity;
+			}
+		}
+	}
 
-        // Divide each total score by total weighting to get an average
-        for (auto &score : scores) {
-            auto item = score.first;
-            auto rank = score.second;
-            rankings.insert(make_pair(rank / totalSim[item], item));
-        }
+    // Divide each total score by total weighting to get an average
+    for (auto &score : scores) {
+        const auto& item = score.first;
+        const auto& rank = score.second;
+        rankings.insert(make_pair(rank / totalSim[item], item));
     }
+    
     return rankings;
 }
+
+
+auto loadMovieLens(const string& path)
+{
+	string line;
+	string::size_type sz;
+	map<int, string> movies;
+	regex re("\\|");
+	ifstream infile(path + "\\u.item");
+	while (getline(infile, line))
+	{
+		for (auto it = sregex_token_iterator(line.cbegin(), line.cend(), re, -1); it != sregex_token_iterator(); )
+		{
+			const auto& id = stoi(static_cast<string>(*it++), &sz);
+			const auto& title = static_cast<string>(*it++);
+			movies[id] = title;
+			break;
+		}
+	}
+		
+	regex re2("\t");
+	ifstream infile2(path + "\\u.data");
+	PreferenceMMapT prefs;
+	while (getline(infile2,line))
+	{
+		for (auto it = sregex_token_iterator(line.cbegin(), line.cend(), re2, -1); it != sregex_token_iterator(); )
+		{
+			const auto& user = static_cast<string>(*it++);
+			const auto& id = stoi(static_cast<string>(*it++), &sz);
+			const auto& rating = stod(static_cast<string>(*it++), &sz);
+			prefs.insert(make_pair(user, make_pair(movies[id], rating)));
+			break;
+		}
+	}
+	return prefs;
+}
+
 
 
 int main() {
@@ -314,17 +349,36 @@ int main() {
 //    });
 
 
-    auto itemsIm = calculateSimilarItems(critics, 3);
-    for_each(itemsIm.cbegin(), itemsIm.cend(), [](auto &item) {
-        cout << item.first << ", " << item.second.first << ", " << item.second.second << endl;
-    });
+    const auto& itemsIm = calculateSimilarItems(critics, 3);
+    //for_each(itemsIm.cbegin(), itemsIm.cend(), [](auto &item) {
+    //    cout << item.first << ", " << item.second.first << ", " << item.second.second << endl;
+    //});
 
-//    auto rankings = getRecommendedItems(critics, itemsIm, "Toby" );
-//    for(auto& ranking : rankings)
-//    {
-//        cout << ranking.first << " " <<  ranking.second << " " << endl;
-//    }
-    return 0;
+    //auto rankings = getRecommendedItems(critics, itemsIm, "Toby" );
+    //for(auto& ranking : rankings)
+    //{
+    //    cout << ranking.first << " " <<  ranking.second << " " << endl;
+    //}
+
+	const string& path("C:\\work\\MachineLearning2\\ml-100k");
+	const auto& prefs = loadMovieLens(path);
+	//auto test =  prefs.equal_range("87");
+	//for_each(test.first, test.second, [](const auto& test) {
+	//	cout << test.first << ", " << test.second.first << ", " << test.second.second << endl;
+	//});
+
+	//auto recs = getRecommendations(prefs, "87");
+	//for (const auto& rec : recs)
+	//{
+	//	cout << rec.first << ", " << rec.second << endl;
+	//}
+
+	const auto& itemSim = calculateSimilarItems(prefs);
+	const auto& recs = getRecommendedItems(prefs, itemSim, "87");
+	for (const auto& rec : recs)
+	{
+		cout << rec.first << ", " << rec.second << endl;
+	}
+	return 0;
+
 }
-
-
