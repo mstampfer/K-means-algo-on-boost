@@ -36,7 +36,7 @@ auto Recommendation::find_common(const string &person1, const string &person2)
 	return common_items;
 }
 
-auto Recommendation::sim_distance(
+double Recommendation::sim_distance(
 	const string& person1,
 	const string& person2)
 {
@@ -52,7 +52,7 @@ auto Recommendation::sim_distance(
 
 
 //Returns the Pearson correlation coefficient for p1 and p2
-auto Recommendation::sim_pearson(const string& person1, const string& person2)
+double Recommendation::sim_pearson(const string& person1, const string& person2)
 {
 
 	// Get the list of mutually rated items
@@ -91,16 +91,17 @@ auto Recommendation::sim_pearson(const string& person1, const string& person2)
 
 // Returns the best matches for person from the prefs dictionary.
 // Number of results and similarity function are optional params.
-auto Recommendation::topMatches(
+SortedPrefs Recommendation::topMatches(
 	const string &person,
 	function<double(
 	const string &person1,
 	const string &person2)> similarity)
 {
-	map<double, string, greater<double>> scores;
+	SortedPrefs scores;
 	for_each(prefs.cbegin(), prefs.cend(), [&scores, &similarity, &person](const auto& pref) {
+		auto f_sim = bind(similarity, pref.first, person);
 		if (pref.first != person)
-			scores.insert(make_pair(similarity(pref.first, person), pref.first));
+			scores.insert(make_pair(f_sim(), pref.first));
 	});
 	return scores;
 }
@@ -129,7 +130,7 @@ auto Recommendation::all_movies(const string& person)
 
 // Gets recommendations for a person by using a weighted average
 // of every other user's rankings
-auto Recommendation::getRecommendations(
+SortedPrefs Recommendation::getRecommendations(
 	const string &person,
 	function<double(
 	const string &person1,
@@ -145,7 +146,8 @@ auto Recommendation::getRecommendations(
 	{
 		if (name != person) // don't compare me to myself
 		{
-			const auto& sim = similarity(person, name);
+			auto f_sim = bind(similarity, person, name);
+			auto sim = f_sim();
 			// ignore scores of zero or lower
 			if (sim > 0)
 			{
@@ -162,14 +164,12 @@ auto Recommendation::getRecommendations(
 						//Sum of similarities
 						simSums[it->second.first] += sim;
 					}
-
 				}
 			}
-
 		}
 	}
 	// Create the normalized list
-	map<double, string, greater<double>> rankings;
+	SortedPrefs rankings;
 	for (auto &item : totals)
 	{
 		rankings[item.second / simSums[item.first]] = item.first;
@@ -178,7 +178,7 @@ auto Recommendation::getRecommendations(
 	return rankings;
 }
 
-auto Recommendation::transformPrefs()
+void Recommendation::transformPrefs()
 {
 	PreferenceMMapT result;
 	for (auto &pref : prefs)
@@ -189,7 +189,7 @@ auto Recommendation::transformPrefs()
 	prefs = result;
 }
 
-auto Recommendation::calculateSimilarItems()
+SimilarityPrefMapT Recommendation::calculateSimilarItems()
 {
 	// Create a dictionary of items showing which other items they are most similar to.
 	SimilarityPrefMapT result;
@@ -203,16 +203,16 @@ auto Recommendation::calculateSimilarItems()
 		if (c % 100 == 0.0)
 			cout << c << "/" << prefs.size() << endl;
 		// Find the most similar items to this one
-		const auto& scores = this->topMatches(item.first, sim_pearson);
-		for (auto &score : scores)
-		{
-			result.insert(make_pair(item.first, score));
-		}
+		//const auto& scores = this->topMatches(item.first);
+		//for (auto &score : scores)
+		//{
+		//	result.insert(make_pair(item.first, score));
+		//}
 	}
 	return result;
 }
 
-auto Recommendation::getRecommendedItems(
+SortedPrefs Recommendation::getRecommendedItems(
 	const SimilarityPrefMapT &itemMatch,
 	const string &user)
 {
@@ -220,11 +220,10 @@ auto Recommendation::getRecommendedItems(
 	map<string, double> totalSim;
 
 	// Return the rankings from highest to lowest rankings.sort( )
-	map<double, string, greater<double>> rankings;
+	SortedPrefs rankings;
 
 	const auto& userRatingsMap = prefs.equal_range(user);
 	const auto& usermovies = all_movies(user);
-
 
 	// Loop over items rated by this user
 	for (auto userRating = userRatingsMap.first; userRating != userRatingsMap.second; ++userRating)

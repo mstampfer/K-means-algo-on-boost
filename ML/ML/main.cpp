@@ -10,6 +10,7 @@
 #include <regex>
 
 #include "Recommendation.h"
+using namespace placeholders;
 
 auto loadMovieLens(const string& path)
 {
@@ -87,26 +88,29 @@ int main() {
 		{ "Toby",{ "Superman Returns", 4.0 } } };
 
 	Recommendation rec(critics);
+	function<double(
+		const string &,
+		const string &)> similarity = bind(&Recommendation::sim_pearson, rec, _1, _2);
 
-	    cout << rec.sim_distance("Lisa Rose", "Gene Seymour") << endl;
+	cout << rec.sim_distance("Lisa Rose", "Gene Seymour") << endl;
 	
-	    cout << rec.sim_pearson("Lisa Rose", "Gene Seymour") << endl;
+	cout << rec.sim_pearson("Lisa Rose", "Gene Seymour") << endl;
 	
-	    auto scores = rec.topMatches("Toby", rec.sim_distance);
-	    for_each(scores.cbegin(), scores.cend(), [](auto& score){
-	        cout << score.first << ", " << score.second << endl;
-	    });
+	auto scores = rec.topMatches("Toby", similarity);
+	for_each(scores.cbegin(), scores.cend(), [](auto& score){
+	    cout << score.first << ", " << score.second << endl;
+	});
 
-	    auto rankings = rec.getRecommendations( "Toby", rec.sim_pearson);
-	    for_each(rankings.cbegin(), rankings.cend(), [](auto &rank) {
-	        cout << rank.first << ", " << rank.second << endl;
-	    });
+	auto rankings = rec.getRecommendations( "Toby", similarity);
+	for_each(rankings.cbegin(), rankings.cend(), [](auto &rank) {
+	    cout << rank.first << ", " << rank.second << endl;
+	});
 
-	    auto movies = rec.transformPrefs();
-	    auto topMatch = rec.topMatches(movies, "Superman Returns");
-	    for_each(topMatch.cbegin(), topMatch.cend(), [](auto &score) {
-	        cout << score.first << ", " << score.second << endl;
-	    });
+	rec.transformPrefs();
+	auto topMatch = rec.topMatches("Superman Returns", similarity);
+	for_each(topMatch.cbegin(), topMatch.cend(), [](auto &score) {
+	    cout << score.first << ", " << score.second << endl;
+	});
 
 
 	const auto& itemsIm = rec.calculateSimilarItems();
@@ -114,31 +118,31 @@ int main() {
 	    cout << item.first << ", " << item.second.first << ", " << item.second.second << endl;
 	});
 
-	auto rankings = rec.getRecommendedItems( itemsIm, "Toby" );
-	for(auto& ranking : rankings)
+	auto recs = rec.getRecommendedItems( itemsIm, "Toby" );
+	for(auto& ranking : recs)
 	{
 	    cout << ranking.first << " " <<  ranking.second << " " << endl;
 	}
 
-	const string& path("C:\\work\\MachineLearning2\\ml-100k");
-	const auto& prefs = loadMovieLens(path);
-	auto test =  prefs.equal_range("87");
-	for_each(test.first, test.second, [](const auto& test) {
-		cout << test.first << ", " << test.second.first << ", " << test.second.second << endl;
-	});
+	//const string& path("C:\\work\\MachineLearning2\\ml-100k");
+	//const auto& prefs = loadMovieLens(path);
+	//auto test =  prefs.equal_range("87");
+	//for_each(test.first, test.second, [](const auto& test) {
+	//	cout << test.first << ", " << test.second.first << ", " << test.second.second << endl;
+	//});
 
-	auto recs = rec.getRecommendations("87");
-	for (const auto& rec : recs)
-	{
-		cout << rec.first << ", " << rec.second << endl;
-	}
+	//const auto r1 = rec.getRecommendations("87", similarity);
+	//for (const auto& r : r1)
+	//{
+	//	cout << r.first << ", " << r.second << endl;
+	//}
 
-	const auto& itemSim = rec.calculateSimilarItems();
-	const auto& recs = rec.getRecommendedItems(itemSim, "87");
-	for (const auto& rec : recs)
-	{
-		cout << rec.first << ", " << rec.second << endl;
-	}
+	//const auto& itemSim = rec.calculateSimilarItems();
+	//auto r2 = rec.getRecommendedItems(itemSim, "87");
+	//for (const auto& r : r2)
+	//{
+	//	cout << r.first << ", " << r.second << endl;
+	//}
 	return 0;
 }
 

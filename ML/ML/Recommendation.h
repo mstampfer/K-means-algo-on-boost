@@ -5,6 +5,7 @@ using PreferencePairT = pair<const string, PreferenceT>;
 using PreferenceMMapT = multimap<const string, PreferenceT>;
 using CommonPrefMapT = multimap<string, pair<double, double>>;
 using SimilarityPrefMapT = multimap<const string, pair<double, string>>;
+using SortedPrefs = map < const double, string, greater<double>>;
 
 class Recommendation
 {
@@ -13,21 +14,21 @@ private:
 public:
 	Recommendation(PreferenceMMapT& prefs);
 	auto find_common(const string &person1, const string &person2);
-	auto sim_distance(const string& person1, const string& person2);
-	auto sim_pearson(const string& person1, const string& person2);
-	auto topMatches(const string &person,
+	double sim_distance(const string& person1, const string& person2);
+	double sim_pearson(const string& person1, const string& person2);
+	SortedPrefs topMatches(const string &person,
 		function<double(
 		const string &person1,
-		const string &person2)> similarity);
+		const string &person2)> similarity = &sim_pearson);
 	auto all_names();
 	auto all_movies(const string& person);
-	auto getRecommendations(const string &person,
+	SortedPrefs getRecommendations(const string &person,
 		function<double(
 		const string &person1,
 		const string &person2)> similarity);
 
-	auto transformPrefs();
-	auto calculateSimilarItems();
-	auto getRecommendedItems(const SimilarityPrefMapT &itemMatch,
+	void transformPrefs();
+	SimilarityPrefMapT calculateSimilarItems();
+	SortedPrefs getRecommendedItems(const SimilarityPrefMapT &itemMatch,
 		const string &user);
 };
