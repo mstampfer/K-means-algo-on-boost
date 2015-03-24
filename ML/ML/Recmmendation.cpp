@@ -10,6 +10,7 @@
 #include <regex>
 
 #include "Recommendation.h"
+#include "util.h"
 
 Recommendation::Recommendation(PreferenceMMapT& prefs) : prefs(prefs) {}
 
@@ -36,20 +37,24 @@ auto Recommendation::find_common(const string &person1, const string &person2)
 	return common_items;
 }
 
+auto Recommendation::itemPairs(const CommonPrefMapT& common)
+{
+	vector<pair<double, double>> items;
+	for_each(common.cbegin(), common.cend(), [&items](const auto& item) 
+	{
+		items.push_back(make_pair(item.second.first, item.second.second));
+	});
+	return items;
+}
+
 double Recommendation::sim_distance(
 	const string& person1,
 	const string& person2)
 {
-	auto sum_of_squares = 0.0;
 	const auto& common = find_common(person1, person2);
-	for_each(common.cbegin(), common.cend(), [&sum_of_squares](const auto& item) {
-		sum_of_squares += pow(item.second.first - item.second.second, 2);
-	});
-	if (sum_of_squares == 0)
-		return 0.0;
-	return 1.0 / (1.0 + sum_of_squares);
+	const auto items = itemPairs(common);
+	return Util::distance(items);
 }
-
 
 //Returns the Pearson correlation coefficient for p1 and p2
 double Recommendation::sim_pearson(const string& person1, const string& person2)
@@ -59,34 +64,8 @@ double Recommendation::sim_pearson(const string& person1, const string& person2)
 	const auto& common = find_common(person1, person2);
 	if (common.size() == 0.0)
 		return 0.0;
-
-	//       Add up all the preferences
-	auto sum1 = 0.0, sum2 = 0.0;
-	for_each(common.cbegin(), common.cend(), [&sum1, &sum2](const auto& prefMap) {
-		sum1 += prefMap.second.first;
-		sum2 += prefMap.second.second;
-	});
-
-	//       Sum up the squares
-	auto sum1Sq = 0.0, sum2Sq = 0.0;
-	for_each(common.cbegin(), common.cend(), [&sum1Sq, &sum2Sq](const auto& prefMap) {
-		sum1Sq += pow(prefMap.second.first, 2);
-		sum2Sq += pow(prefMap.second.second, 2);
-	});
-
-	//       Sum up the products
-	auto pSum = 0.0;
-	for_each(common.cbegin(), common.cend(), [&pSum](const auto& prefMap) {
-		pSum += prefMap.second.first*prefMap.second.second;
-	});
-
-	//       Calculate Pearson score
-	const auto& n = common.size();
-	const auto& num = pSum - (sum1*sum2 / n);
-	const auto& den = sqrt((sum1Sq - pow(sum1, 2) / n)*(sum2Sq - pow(sum2, 2) / n));
-	if (den == 0) return 0.0;
-	const auto& r = num / den;
-	return r;
+	const auto items = itemPairs(common);
+	return Util::pearson(items);
 }
 
 // Returns the best matches for person from the prefs dictionary.

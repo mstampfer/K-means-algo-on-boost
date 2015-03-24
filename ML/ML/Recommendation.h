@@ -11,6 +11,7 @@ class Recommendation
 {
 private:
 	PreferenceMMapT& prefs;
+	auto itemPairs(const CommonPrefMapT& common);
 public:
 	Recommendation(PreferenceMMapT& prefs);
 	auto find_common(const string &person1, const string &person2);
