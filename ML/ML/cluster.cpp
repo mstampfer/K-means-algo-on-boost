@@ -2,6 +2,7 @@
 #include <regex>
 #include <algorithm>
 #include <functional>
+#include <set>
 
 #include "cluster.h"
 #include "util.h"
@@ -54,22 +55,6 @@ double Bicluster::cluster_pearson(const vector<string>& v1, const vector<string>
 {
 	return 0.0;
 }
-
-auto Bicluster::hcluster(const vector<vector<double>>& rows,
-	function<double(const vector<double>&, const vector<double>&)> simularity)
-{
-	int currentclustid = -1;
-	vector<Bicluster> cluster;
-	//	Clusters are initially just the rows
-	for (const auto& row : rows)
-	{
-		string i;
-		Bicluster clust(make_unique<const vector<double>>(row), nullptr, nullptr, 0.0, i);
-		cluster.push_back(clust);
-	}
-	auto closest = distance(cluster[0].vec, cluster[1].vec);
-}
-
 double Bicluster::distance(const vector<double>& v1, const vector<double>& v2)
 {
 	vector<pair<double, double>> pairs;
@@ -79,25 +64,63 @@ double Bicluster::distance(const vector<double>& v1, const vector<double>& v2)
 	}
 	return Util::distance(pairs);
 }
-//def hcluster(rows, distance = pearson) :
-//	distances = {}
-//	currentclustid = -1
-//	Clusters are initially just the rows
-//	clust = [bicluster(rows[i], id = i) for i in range(len(rows))]
-//	while len(clust)>1:
-//lowestpair = (0, 1)
-//closest = distance(clust[0].vec, clust[1].vec)
-//# loop through every pair looking for the smallest distance
-//for i in range(len(clust)) :
-//	for j in range(i + 1, len(clust)) :
-//		# distances is the cache of distance calculations
-//		if (clust[i].id, clust[j].id) not in distances :
-//distances[(clust[i].id, clust[j].id)] = distance(clust[i].vec, clust[j].vec)
-//d = distances[(clust[i].id, clust[j].id)]
-//if d<closest :
-//	closest = d
-//	lowestpair = (i, j)
-//	# calculate the average of the two clusters
+auto Bicluster::hcluster(const vector<vector<double>>& rows,
+	function<double(const vector<double>&, const vector<double>&)> simularity)
+{
+	vector<Bicluster> cluster;
+	vector<double> mergevec;
+	set<unsigned, std::greater<int>> lowestpair{1, 0};
+	vector<unsigned> lowestpairv{ 0, 1 };
+	int currentclustid = -1;
+
+	map<set<unsigned>, double> distances;
+	//	Clusters are initially just the rows
+	for (const auto& row : rows)
+	{
+		string i;
+		Bicluster clust(make_unique<const vector<double>>(row), nullptr, nullptr, 0.0, i);
+		cluster.push_back(clust);
+	}
+	auto closest = distance(cluster[0].vec, cluster[1].vec);
+
+	// loop through every pair looking for the smallest distance
+	for (unsigned i = 1; i <= cluster.size(); ++i)
+	{
+		for (unsigned j = 1; i <= cluster.size(); ++j)
+		{
+		// distances is the cache of distance calculations
+			set<unsigned> test{ i, j };
+			if (distances.find(test) == distances.cend())
+				distances[test] = distance(cluster[i].vec, cluster[j].vec);
+			double d = distances[test];
+			if (d < closest)
+			{
+				closest = d;
+				lowestpair  = { i, j };
+				lowestpairv = { i, j };
+			}
+		}
+		// calculate the average of the two clusters
+		for (unsigned idx = 0; idx < cluster[0].vec.size(); ++idx)
+		{
+			mergevec.push_back((cluster[lowestpairv[0]].vec[idx]
+				+ cluster[lowestpairv[1]].vec[idx]) / 2.0);
+		}
+		//create the new cluster
+		Bicluster newcluster(make_unique<const vector<double>>(mergevec),
+			make_unique<const vector<double>>(cluster[lowestpairv[0]]),
+			make_unique<const vector<double>>(cluster[lowestpairv[1]],
+			closest,
+			currentclustid));
+		//cluster ids that weren't in the original set are negative
+		currentclustid -= 1;
+		for (const auto& e : lowestpair)
+			cluster.erase(cluster.begin() + e);
+		cluster.push_back(newcluster);
+		return cluster[0];
+	}
+}
+
 //	mergevec = [
 //		(clust[lowestpair[0]].vec[i] + clust[lowestpair[1]].vec[i]) / 2.0
 //			for i in range(len(clust[0].vec))]
