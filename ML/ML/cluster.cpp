@@ -46,15 +46,15 @@ auto readfile(const string& path,
 }
 
 Bicluster::Bicluster() :
-	id(0), vec(vector<double>()), left(vector<double>()), right(vector<double>()), dist(0.0) {}
+	id(0), vec(vector<double>()), left(nullptr), right(nullptr), dist(0.0) {}
 
 Bicluster::Bicluster(const int id, 
 	const vector<double>& vec,
-	const vector<double>& left = vector<double>(),
-	const vector<double>& right = vector<double>(),
+	unique_ptr<Bicluster> left = nullptr,
+	unique_ptr<Bicluster> right = nullptr,
 	double distance = 0.0)
 	 :
-	id(id), vec(vec), left(left), right(right), dist(distance)
+	id(id), vec(vec), left(move(left)), right(move(right)), dist(distance)
 {}
 
 double Bicluster::cluster_pearson(const vector<double>& v1, const vector<double>& v2)
@@ -68,13 +68,13 @@ double Bicluster::distance(const vector<double>& v1, const vector<double>& v2)
 	return Util::distance(getpairs(v1, v2));
 }
 
-auto Bicluster::hcluster(const vector<vector<double>>& rows,
+auto& Bicluster::hcluster(const vector<vector<double>>& rows,
 	function<double(const vector<double>&, const vector<double>&)> simularity
 
 	)
 {
 	vector<double> mergevec;
-	vector<Bicluster> cluster;
+	vector<Bicluster> clusters;
 
 	set<unsigned, std::greater<int>> lowestpair;
 	vector<unsigned> lowestpairv;
@@ -85,25 +85,25 @@ auto Bicluster::hcluster(const vector<vector<double>>& rows,
 	//	Clusters are initially just the rows
 	for (const auto& row : rows)
 	{
-		Bicluster clust(++cid, row);
-		cluster.push_back(clust);
+		//Bicluster clust(++cid, row);
+		clusters.emplace_back(++cid, row);
 	}
 
-	while (cluster.size() > 1)
+	while (clusters.size() > 1)
 	{
 		lowestpair = { 1, 0 };
 		lowestpairv = { 1, 0 };
-		auto closest = distance(cluster[0].vec, cluster[1].vec);
+		auto closest = distance(clusters[0].vec, clusters[1].vec);
 		// loop through every pair looking for the smallest distance
-		for (unsigned i = 1; i < cluster.size(); ++i)
+		for (unsigned i = 1; i < clusters.size(); ++i)
 		{
-			for (unsigned j = i + 1; j < cluster.size(); ++j)
+			for (unsigned j = i + 1; j < clusters.size(); ++j)
 			{
-				cout << "i " << i << " j " << j << " " << cluster.size() << endl;
+				cout << "i " << i << " j " << j << " " << clusters.size() << endl;
 				// distances is the cache of distance calculations
 				set<unsigned> test{ i, j };
 				if (distances.find(test) == distances.cend())
-					distances[test] = distance(cluster[i].vec, cluster[j].vec);
+					distances[test] = distance(clusters[i].vec, clusters[j].vec);
 				double d = distances[test];
 				if (d < closest)
 				{
@@ -113,50 +113,54 @@ auto Bicluster::hcluster(const vector<vector<double>>& rows,
 				}
 			}
 			// calculate the average of the two clusters
-			for (unsigned idx = 0; idx < cluster[0].vec.size(); ++idx)
+			for (unsigned idx = 0; idx < clusters[0].vec.size(); ++idx)
 			{
-				mergevec.push_back((cluster[lowestpairv[0]].vec[idx]
-					+ cluster[lowestpairv[1]].vec[idx]) / 2.0);
+				mergevec.push_back((clusters[lowestpairv[0]].vec[idx]
+					+ clusters[lowestpairv[1]].vec[idx]) / 2.0);
 			}
 			//create the new cluster
-			Bicluster newcluster(currentclustid,
-				mergevec,
-				cluster[lowestpairv[0]].vec,
-				cluster[lowestpairv[1]].vec,
-				closest
-				);
+			//Bicluster newcluster(currentclustid,
+			//	mergevec,
+			//	make_unique<Bicluster>(move(clusters[lowestpairv[0]])),
+			//	make_unique<Bicluster>(move(clusters[lowestpairv[1]])),
+			//	closest
+			//	);
 			//cluster ids that weren't in the original set are negative
 			currentclustid -= 1;
 			for (const auto& e : lowestpair)
-				cluster.erase(cluster.begin() + e);
-			cluster.push_back(newcluster);
+				clusters.erase(clusters.begin() + e);
+			clusters.emplace_back(currentclustid,
+				mergevec,
+				make_unique<Bicluster>(move(clusters[lowestpairv[0]])),
+				make_unique<Bicluster>(move(clusters[lowestpairv[1]])),
+				closest);
 		}
 	}
-	return cluster[0];
+	return move(clusters[0]);
 }
 
-void Bicluster::printclust(const vector<Bicluster>& cluster, const vector<string>& labels, unsigned n) 
+void Bicluster::printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n) 
 {
 	// indent to make a hierarchy layout
-	for (int i = 0; i != n; ++i)
+	for (unsigned i = 0; i < n; ++i)
 	{
 		cout << ' ';
-		if (cluster[i].id < 0)
+		if (cluster.id < 0)
 			// negative id means that this is branch
 			cout << '-' << endl;
 		else
 		{
 			// positive id means that this is an endpoint
 			if (labels.size() == 0)
-				cout << cluster[i].id << endl;
+				cout << cluster.id << endl;
 			else
-				cout << labels[cluster[i].id] << endl;
+				cout << labels[cluster.id] << endl;
 		}
-		// now print the right and left branches
-		//if (cluster[i].left.size > 0)
-		//	printclust(cluster[i].left, labels, n + 1);
-		//if (cluster[i].right.size > 0)
-		//	printclust(cluster[i].right, labels, n + 1);
+		 //now print the right and left branches
+		if (cluster.left->vec.size() > 0)
+			printclust(*cluster.left, labels, n + 1);
+		if (cluster.right->vec.size() > 0)
+			printclust(*cluster.right, labels, n + 1);
 	}
 }
 int main()
@@ -166,8 +170,8 @@ int main()
 	vector<vector<double>> data;
 	readfile(path, colnames, rownames, data);
 	Bicluster cluster;
-	auto similarity = bind(&Bicluster::cluster_pearson, cluster, _1, _2);
-	auto clusters = cluster.hcluster(data, similarity);
+	//auto& similarity = bind(&Bicluster::cluster_pearson, cluster, _1, _2);
+	auto& clusters = cluster.hcluster(data, bind(&Bicluster::cluster_pearson, cluster, _1, _2));
 
-//	clusters.printclust(clusters, rownames);
+	clusters.printclust(clusters, rownames);
 }

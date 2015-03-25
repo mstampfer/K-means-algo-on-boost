@@ -7,10 +7,12 @@
 
 using namespace std;
 using CommonPrefMapT = multimap<string, pair<double, double>>;
+
 class Bicluster
 {
 private:
-	vector<double> vec, left, right;
+	vector<double> vec;
+	unique_ptr<Bicluster> left, right;
 	int id;
 	double dist;
 	double distance(const vector<double>&, const vector<double>&);
@@ -30,12 +32,12 @@ public:
 	Bicluster();
 	Bicluster(const int id,
 		const vector<double>& vec,
-		const vector<double>& left,
-		const vector<double>& right,
+		unique_ptr<Bicluster> left,
+		unique_ptr<Bicluster> right,
 		double distance);
 
 	double cluster_pearson(const vector<double>& v1, const vector<double>& v2);
-	auto hcluster(const vector<vector<double>>& rows,
+	auto& hcluster(const vector<vector<double>>& rows,
 		function<double(const vector<double>&, const vector<double>&)> simularity);
-	void printclust(const vector<Bicluster>& cluster, const vector<string>& labels, unsigned n);
+	void printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n = 3);
 };
