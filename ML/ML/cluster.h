@@ -10,20 +10,32 @@ using CommonPrefMapT = multimap<string, pair<double, double>>;
 class Bicluster
 {
 private:
-	const vector<double> vec, left, right;
-	string id;
+	vector<double> vec, left, right;
+	int id;
 	double dist;
 	double distance(const vector<double>&, const vector<double>&);
+	function<vector<pair<double, double>>(const vector<double>&, const vector<double>&)>
+		getpairs = [](const vector<double>& v1, const vector<double>& v2)
+	{
+		vector<pair<double, double>> pairs;
+		for (int i = 0; i != v1.size(); ++i)
+		{
+			pairs.push_back(make_pair(v1[i], v2[i]));
+		}
+		return pairs;
+	};
 
 	
 public:
-	Bicluster(unique_ptr<const vector<double>> vec,
-		unique_ptr<const vector<double>> left,
-		unique_ptr<const vector<double>> right,
-			  double distance,
-			  const string& id);
+	Bicluster();
+	Bicluster(const int id,
+		const vector<double>& vec,
+		const vector<double>& left,
+		const vector<double>& right,
+		double distance);
 
-	double cluster_pearson(const vector<string>& v1, const vector<string>& v2);
+	double cluster_pearson(const vector<double>& v1, const vector<double>& v2);
 	auto hcluster(const vector<vector<double>>& rows,
 		function<double(const vector<double>&, const vector<double>&)> simularity);
+	void printclust(const vector<Bicluster>& cluster, const vector<string>& labels, unsigned n);
 };
