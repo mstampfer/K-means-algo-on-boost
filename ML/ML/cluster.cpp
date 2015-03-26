@@ -68,7 +68,7 @@ double Bicluster::distance(const vector<double>& v1, const vector<double>& v2)
 	return Util::distance(getpairs(v1, v2));
 }
 
-auto& Bicluster::hcluster(const vector<vector<double>>& rows,
+auto Bicluster::hcluster(const vector<vector<double>>& rows,
 	function<double(const vector<double>&, const vector<double>&)> simularity
 
 	)
@@ -118,33 +118,31 @@ auto& Bicluster::hcluster(const vector<vector<double>>& rows,
 				mergevec.push_back((clusters[lowestpairv[0]].vec[idx]
 					+ clusters[lowestpairv[1]].vec[idx]) / 2.0);
 			}
+
 			//create the new cluster
-			//Bicluster newcluster(currentclustid,
-			//	mergevec,
-			//	make_unique<Bicluster>(move(clusters[lowestpairv[0]])),
-			//	make_unique<Bicluster>(move(clusters[lowestpairv[1]])),
-			//	closest
-			//	);
-			//cluster ids that weren't in the original set are negative
-			currentclustid -= 1;
-			for (const auto& e : lowestpair)
-				clusters.erase(clusters.begin() + e);
 			clusters.emplace_back(currentclustid,
 				mergevec,
 				make_unique<Bicluster>(move(clusters[lowestpairv[0]])),
 				make_unique<Bicluster>(move(clusters[lowestpairv[1]])),
 				closest);
+
+			//remove merged clusters
+			for (const auto& e : lowestpair)
+				clusters.erase(clusters.begin() + e);
+
+			//cluster ids that weren't in the original set are negative
+			currentclustid -= 1;
 		}
 	}
 	return move(clusters[0]);
 }
 
-void Bicluster::printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n) 
+void Bicluster::printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n = 3) 
 {
 	// indent to make a hierarchy layout
 	for (unsigned i = 0; i < n; ++i)
 	{
-		cout << ' ';
+		for (unsigned ws = 0; ws < n; ++ws) cout << ' ';
 		if (cluster.id < 0)
 			// negative id means that this is branch
 			cout << '-' << endl;
@@ -157,9 +155,9 @@ void Bicluster::printclust(const Bicluster& cluster, const vector<string>& label
 				cout << labels[cluster.id] << endl;
 		}
 		 //now print the right and left branches
-		if (cluster.left->vec.size() > 0)
+		if (cluster.left.get())
 			printclust(*cluster.left, labels, n + 1);
-		if (cluster.right->vec.size() > 0)
+		if (cluster.right.get())
 			printclust(*cluster.right, labels, n + 1);
 	}
 }
@@ -170,8 +168,9 @@ int main()
 	vector<vector<double>> data;
 	readfile(path, colnames, rownames, data);
 	Bicluster cluster;
-	//auto& similarity = bind(&Bicluster::cluster_pearson, cluster, _1, _2);
-	auto& clusters = cluster.hcluster(data, bind(&Bicluster::cluster_pearson, cluster, _1, _2));
+	function<double(const vector<double>&,
+		const vector<double>&)> similarity;
+	auto clusters = cluster.hcluster(data, similarity);
 
 	clusters.printclust(clusters, rownames);
 }

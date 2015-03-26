@@ -37,7 +37,7 @@ public:
 		double distance);
 
 	double cluster_pearson(const vector<double>& v1, const vector<double>& v2);
-	auto& hcluster(const vector<vector<double>>& rows,
+	auto hcluster(const vector<vector<double>>& rows,
 		function<double(const vector<double>&, const vector<double>&)> simularity);
-	void printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n = 3);
+	void printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n);
 };
