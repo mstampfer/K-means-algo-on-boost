@@ -113,25 +113,30 @@ auto Bicluster::hcluster(const vector<vector<double>>& rows,
 				}
 			}
 			// calculate the average of the two clusters
-			for (unsigned idx = 0; idx < clusters[0].vec.size(); ++idx)
+			if (lowestpair.size() > 0)
 			{
-				mergevec.push_back((clusters[lowestpairv[0]].vec[idx]
-					+ clusters[lowestpairv[1]].vec[idx]) / 2.0);
+				for (unsigned idx = 0; idx < clusters[0].vec.size(); ++idx)
+				{
+					mergevec.push_back((clusters[lowestpairv[0]].vec[idx]
+						+ clusters[lowestpairv[1]].vec[idx]) / 2.0);
+				}
+
+				//create the new cluster
+				clusters.emplace_back(currentclustid,
+					mergevec,
+					make_unique<Bicluster>(move(clusters[lowestpairv[0]])),
+					make_unique<Bicluster>(move(clusters[lowestpairv[1]])),
+					closest);
+
+				//remove merged clusters
+				for (const auto& e : lowestpair)
+					clusters.erase(clusters.begin() + e);
+
+				lowestpair = {};
+
+				//cluster ids that weren't in the original set are negative
+				currentclustid -= 1;
 			}
-
-			//create the new cluster
-			clusters.emplace_back(currentclustid,
-				mergevec,
-				make_unique<Bicluster>(move(clusters[lowestpairv[0]])),
-				make_unique<Bicluster>(move(clusters[lowestpairv[1]])),
-				closest);
-
-			//remove merged clusters
-			for (const auto& e : lowestpair)
-				clusters.erase(clusters.begin() + e);
-
-			//cluster ids that weren't in the original set are negative
-			currentclustid -= 1;
 		}
 	}
 	return move(clusters[0]);
