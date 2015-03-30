@@ -169,7 +169,8 @@ void Bicluster::printclust(const Bicluster& cluster, const vector<string>& label
 
 auto Bicluster::kcluster(const vector<vector<double>>& rows,
 	function<double(const vector<double>&, const vector<double>&)> simularity,
-	unsigned k = 3)
+	unsigned k
+	)
 {
 	// Determine the minimum and maximum values for each point
 	vector<pair<double, double>> ranges;
@@ -183,10 +184,10 @@ auto Bicluster::kcluster(const vector<vector<double>>& rows,
 	std::default_random_engine generator;
 	std::uniform_real_distribution<double> distribution(0.0, 1.0);
 	double rand = 0.0;
-
+	vector<vector<unsigned>> bestmatches(k, { 0 }), lastmatches;
 	vector<vector<double>> clusters;
 
-	for (auto j : Util::range(100))
+	for (auto j : Util::range(k))
 	{
 		vector<double> cluster;
 		for (auto i : Util::range(rows[0].size()))
@@ -203,20 +204,19 @@ auto Bicluster::kcluster(const vector<vector<double>>& rows,
 		cout << "Iteration " << t << endl;
 
 		unsigned bestmatch{ 0 };
-		vector<vector<unsigned>> bestmatches, lastmatches;
-		bestmatches.reserve(k);
 		// Find which centroid is the closest for each row
-		for ( auto j : Util::range(rows.size()))
+		unsigned r = 0;
+		for (const auto& row : rows)
 		{
-			const auto row = rows[j];
+			bestmatch = 0;
 			for (auto i : Util::range(k))
 			{
-				bestmatches.emplace_back();
 				auto d = distance(clusters[i], row);
 				if (d < distance(clusters[bestmatch], row))
 					bestmatch = i;
 			}
-			bestmatches[j].push_back(bestmatch);
+			bestmatches[bestmatch].push_back(r);
+			++r;
 		}
 
 		// If the results are the same as last time, this is complete
@@ -227,20 +227,19 @@ auto Bicluster::kcluster(const vector<vector<double>>& rows,
 		// Move the centroids to the average of their members
 		for (auto i : Util::range(k))
 		{
-			vector<double> avgs(rows[0].size());
+			vector<double> avgs(rows[0].size(), 0);
 			if (bestmatches[i].size() > 0)
 			{
 				for (auto rowid : bestmatches[i])
 					for (auto m : Util::range(rows[rowid].size()))
 						avgs[m] += rows[rowid][m];
 				for (auto j : Util::range(avgs.size()))
-				{
 					avgs[j] /= bestmatches[i].size();
-					clusters[i] = avgs;
-				}
+				clusters[i] = avgs;
 			}
 		}
 	}
+	return bestmatches;
 }
 
 int main()
@@ -251,9 +250,10 @@ int main()
 	readfile(path, colnames, rownames, data);
 	Bicluster cluster;
 	function<double(const vector<double>&,
-		const vector<double>&)> similarity;
+		const vector<double>&)> similarity = bind(&Bicluster::cluster_pearson, ref(cluster), _1, _2);
 	//auto clusters = cluster.hcluster(data, similarity);
 	//clusters.printclust(clusters, rownames);
-
-	cluster.kcluster(data, similarity, 10);
+	auto clust = cluster.kcluster(data, similarity);
+	//for (const auto& r : Util::range(10))
+	//	cout << rownames[clust[r]] << endl;
 }

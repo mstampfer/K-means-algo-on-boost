@@ -50,6 +50,7 @@ public:
 	auto hcluster(const vector<vector<double>>& rows,
 		function<double(const vector<double>&, const vector<double>&)> simularity);
 	auto kcluster(const vector<vector<double>>& rows,
-		function<double(const vector<double>&, const vector<double>&)> simularity, unsigned n);
+		 function<double(const vector<double>&, const vector<double>&)> simularity,
+		 unsigned n = 10);
 	void printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n);
 };
