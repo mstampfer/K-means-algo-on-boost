@@ -43,3 +43,9 @@ double Util::pearson(const vector<pair<double,double>>& common)
 	const auto& r = num / den;
 	return r;
 }
+
+vector<unsigned> Util::range(unsigned len, unsigned start) {
+	vector<unsigned> v(len);
+	iota(v.begin(), v.end(), start);
+	return v;
+};
