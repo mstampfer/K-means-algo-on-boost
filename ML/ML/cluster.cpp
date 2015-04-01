@@ -254,6 +254,8 @@ int main()
 	//auto clusters = cluster.hcluster(data, similarity);
 	//clusters.printclust(clusters, rownames);
 	auto clust = cluster.kcluster(data, similarity);
-	//for (const auto& r : Util::range(10))
-	//	cout << rownames[clust[r]] << endl;
+	for (const auto& r : Util::range(10))
+		for (const auto& j : clust[r])			
+			cout << rownames[clust[r][j]] << endl;
+		cout << endl;
 }
