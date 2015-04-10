@@ -5,16 +5,26 @@ VisualStudioVersion = 14.0.22609.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ML", "ML\ML.vcxproj", "{42ABDF2C-8588-4F37-9A01-1FB07E117D0D}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Python", "Python\Python.pyproj", "{AB1C872A-D68E-4491-A01D-0CEB1A99F28E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42ABDF2C-8588-4F37-9A01-1FB07E117D0D}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{42ABDF2C-8588-4F37-9A01-1FB07E117D0D}.Debug|x86.ActiveCfg = Debug|Win32
 		{42ABDF2C-8588-4F37-9A01-1FB07E117D0D}.Debug|x86.Build.0 = Debug|Win32
+		{42ABDF2C-8588-4F37-9A01-1FB07E117D0D}.Release|Any CPU.ActiveCfg = Release|Win32
 		{42ABDF2C-8588-4F37-9A01-1FB07E117D0D}.Release|x86.ActiveCfg = Release|Win32
 		{42ABDF2C-8588-4F37-9A01-1FB07E117D0D}.Release|x86.Build.0 = Release|Win32
+		{AB1C872A-D68E-4491-A01D-0CEB1A99F28E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB1C872A-D68E-4491-A01D-0CEB1A99F28E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AB1C872A-D68E-4491-A01D-0CEB1A99F28E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB1C872A-D68E-4491-A01D-0CEB1A99F28E}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

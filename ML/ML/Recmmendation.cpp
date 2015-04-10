@@ -9,8 +9,36 @@
 #include <fstream>
 #include <regex>
 
+#include <boost/python/module.hpp>
+#include <boost/python/def.hpp>
+#include <boost/python.hpp>
+
 #include "Recommendation.h"
 #include "util.h"
+
+
+using namespace boost::python;
+
+char const* greet()
+{
+	return "hello world!";
+}
+
+struct World
+{
+	World(std::string msg) : msg(msg) {}
+	void set(std::string msg) { this->msg = msg; }
+	std::string greet() { return msg + " there! "; }
+	std::string msg;
+};
+
+BOOST_PYTHON_MODULE(ml_ext)
+{
+	def("greet", greet);
+	class_<World>("World", init<std::string>())
+		.def("greet", &World::greet)
+		.def("set", &World::set);
+}
 
 Recommendation::Recommendation(PreferenceMMapT& prefs) : prefs(prefs) {}
 

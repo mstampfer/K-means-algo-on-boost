@@ -3,8 +3,6 @@
 #include <map>
 #include <memory>
 
-#include "cluster.h"
-
 using namespace std;
 using CommonPrefMapT = multimap<string, pair<double, double>>;
 

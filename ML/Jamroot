@@ -1,0 +1,33 @@
+import python ;
+
+if ! [ python.configured ]
+{
+    ECHO "notice: no Python configured in user-config.jam" ;
+    ECHO "notice: will use default configuration" ;
+    using python ;
+}
+
+use-project boost
+   : c:\\boost_1_55_0 ;
+
+project
+  : requirements <library>/boost/python//boost_python 
+                 <implicit-dependency>/boost//headers 
+  : usage-requirements <implicit-dependency>/boost//headers 
+  ;
+
+lib boost_python : : <name>boost_python <search>c:/boost_1_55_0/stage/lib ;
+
+python-extension ml_ext 
+  : ML/Recmmendation.cpp 
+   ML/cluster.cpp 
+   ML/util.cpp 
+  ;
+
+install convenient_copy 
+  : ml_ext 
+  : <install-dependencies>on 
+    <install-type>SHARED_LIB 
+    <install-type>PYTHON_EXTENSION 
+    <location>. 
+  ;

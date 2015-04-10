@@ -8,6 +8,7 @@
 
 #include "cluster.h"
 #include "util.h"
+
 using namespace placeholders;
 
 auto readfile(const string& path, 
@@ -250,7 +251,7 @@ int main()
 	readfile(path, colnames, rownames, data);
 	Bicluster cluster;
 	function<double(const vector<double>&,
-		const vector<double>&)> similarity = bind(&Bicluster::cluster_pearson, ref(cluster), _1, _2);
+		const vector<double>&)> similarity = bind(&Bicluster::cluster_pearson, ref(cluster), std::placeholders::_1, std::placeholders::_2);
 	//auto clusters = cluster.hcluster(data, similarity);
 	//clusters.printclust(clusters, rownames);
 	auto clust = cluster.kcluster(data, similarity);
