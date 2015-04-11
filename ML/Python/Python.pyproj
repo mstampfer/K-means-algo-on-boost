@@ -16,8 +16,10 @@
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
     <Environment>PYTHONPATH=c:\work\MachineLearning2\ML</Environment>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <InterpreterId>{5a9880a5-5233-443b-a873-ad6548568ff7}</InterpreterId>
-    <InterpreterVersion>3.5</InterpreterVersion>
+    <InterpreterId>
+    </InterpreterId>
+    <InterpreterVersion>
+    </InterpreterVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,9 +35,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="main.py" />
-  </ItemGroup>
-  <ItemGroup>
-    <InterpreterReference Include="{5a9880a5-5233-443b-a873-ad6548568ff7}\3.5" />
   </ItemGroup>
   <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />
   <Import Condition="!Exists($(PtvsTargetsFile))" Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
