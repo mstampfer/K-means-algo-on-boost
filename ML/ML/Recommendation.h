@@ -1,5 +1,10 @@
 #pragma once
+#include <boost/python/module.hpp>
+#include <boost/python/def.hpp>
+#include <boost/python.hpp>
+
 using namespace std;
+using namespace boost::python;
 using PreferenceT = pair<const string, const double>;
 using PreferencePairT = pair<const string, PreferenceT>;
 using PreferenceMMapT = multimap<const string, PreferenceT>;
@@ -32,4 +37,13 @@ public:
 	SimilarityPrefMapT calculateSimilarItems();
 	SortedPrefs getRecommendedItems(const SimilarityPrefMapT &itemMatch,
 		const string &user);
+	static auto buildDict();
+};
+
+struct World
+{
+	World(std::string msg);
+	void set(std::string msg);
+	std::string greet();
+	std::string msg;
 };
