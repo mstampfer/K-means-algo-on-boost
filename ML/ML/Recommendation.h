@@ -4,21 +4,26 @@
 #include <boost/python.hpp>
 
 using namespace std;
-using namespace boost::python;
 using PreferenceT = pair<const string, const double>;
 using PreferencePairT = pair<const string, PreferenceT>;
 using PreferenceMMapT = multimap<const string, PreferenceT>;
 using CommonPrefMapT = multimap<string, pair<double, double>>;
 using SimilarityPrefMapT = multimap<const string, pair<double, string>>;
 using SortedPrefs = map < const double, string, greater<double>>;
+typedef multimap<const string, PreferenceT> Critics;
+namespace python = boost::python;
 
 class Recommendation
 {
 private:
-	PreferenceMMapT& prefs;
+	PreferenceMMapT prefs;
+	const python::dict critics_p;
 	auto itemPairs(const CommonPrefMapT& common);
+	PreferenceMMapT SetParameters(const python::dict& critics);
+
 public:
-	Recommendation(PreferenceMMapT& prefs);
+	Recommendation(const python::dict&);
+	//Recommendation(PreferenceMMapT& prefs);
 	auto find_common(const string &person1, const string &person2);
 	double sim_distance(const string& person1, const string& person2);
 	double sim_pearson(const string& person1, const string& person2);
@@ -32,18 +37,10 @@ public:
 		function<double(
 		const string &person1,
 		const string &person2)> similarity);
-
 	void transformPrefs();
 	SimilarityPrefMapT calculateSimilarItems();
 	SortedPrefs getRecommendedItems(const SimilarityPrefMapT &itemMatch,
 		const string &user);
-	static auto buildDict();
+	python::dict Recommendation::get();
 };
 
-struct World
-{
-	World(std::string msg);
-	void set(std::string msg);
-	std::string greet();
-	std::string msg;
-};

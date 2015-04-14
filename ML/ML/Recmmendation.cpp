@@ -9,19 +9,53 @@
 #include <fstream>
 #include <regex>
 
+#include <boost/python/raw_function.hpp>
+
 #include "Recommendation.h"
 #include "util.h"
 
+//Recommendation::Recommendation(PreferenceMMapT& prefs) : prefs(prefs) {}
 
-World::World(std::string msg) : msg(msg) {}
-void World::set(std::string msg) { this->msg = msg; }
-std::string World::greet() { return msg + " there! "; }
+Recommendation::Recommendation(const python::dict& critics)
+	: critics_p(critics)
+{
+}
 
-Recommendation::Recommendation(PreferenceMMapT& prefs) : prefs(prefs) {}
+PreferenceMMapT Recommendation::SetParameters(const python::dict& vals)
+{
+	Critics critics;
+	python::list keys = vals.keys();
+
+	for (int i = 0; i < len(keys); ++i)
+	{
+		auto curArg = static_cast<python::dict>(vals[keys[i]]);
+		if (curArg)
+		{
+			string key(python::extract<string>(vals.keys()[i]));
+			for (int j = 0; j < len(curArg); ++j)
+			{
+				string s = move(python::extract<string>(curArg.keys()[j]));
+				double  d = move(python::extract<double>(curArg.values()[j]));
+				critics.insert(make_pair(key, make_pair(s, d)));
+			}
+		}
+	}
+
+	//for (auto& e1 : critics)
+	//	cout << e1.first << " " << e1.second.first << " " << e1.second.second << endl;
+
+	return critics;
+}
+
+python::dict Recommendation::get()
+{
+	return critics_p;
+}
 
 auto Recommendation::find_common(const string &person1, const string &person2)
 {
 	CommonPrefMapT common_items;
+	prefs = SetParameters(get());
 	const auto p1_items = prefs.equal_range(person1);
 	const auto p2_items = prefs.equal_range(person2);
 	vector<PreferencePairT> person1v(p1_items.first, p1_items.second);
@@ -246,141 +280,70 @@ SortedPrefs Recommendation::getRecommendedItems(
 	return rankings;
 }
 
-auto Recommendation::buildDict()
-{
-
-	PreferenceMMapT critics = {
-		{ "Lisa Rose",{ "Lady in the Water", 2.5 } },
-		{ "Lisa Rose",{ "Snakes on a Plane", 3.5 } },
-		{ "Lisa Rose",{ "Just My Luck", 3.0 } },
-		{ "Lisa Rose",{ "Superman Returns", 3.5 } },
-		{ "Lisa Rose",{ "You, Me and Dupree", 2.5 } },
-		{ "Lisa Rose",{ "The Night Listener", 3.0 } },
-		{ "Gene Seymour",{ "Lady in the Water", 3.0 } },
-		{ "Gene Seymour",{ "Snakes on a Plane", 3.5 } },
-		{ "Gene Seymour",{ "Just My Luck", 1.5 } },
-		{ "Gene Seymour",{ "Superman Returns", 5.0 } },
-		{ "Gene Seymour",{ "The Night Listener", 3.0 } },
-		{ "Gene Seymour",{ "You, Me and Dupree", 3.5 } },
-		{ "Michael Phillips",{ "Lady in the Water", 2.5 } },
-		{ "Michael Phillips",{ "Snakes on a Plane", 3.0 } },
-		{ "Michael Phillips",{ "Superman Returns", 3.5 } },
-		{ "Michael Phillips",{ "The Night Listener", 4.0 } },
-		{ "Claudia Puig",{ "Snakes on a Plane", 3.5 } },
-		{ "Claudia Puig",{ "Just My Luck", 3.0 } },
-		{ "Claudia Puig",{ "The Night Listener", 4.5 } },
-		{ "Claudia Puig",{ "Superman Returns", 4.0 } },
-		{ "Claudia Puig",{ "You, Me and Dupree", 2.5 } },
-		{ "Mick LaSalle",{ "Lady in the Water", 3.0 } },
-		{ "Mick LaSalle",{ "Snakes on a Plane", 4.0 } },
-		{ "Mick LaSalle",{ "Just My Luck", 2.0 } },
-		{ "Mick LaSalle",{ "Superman Returns", 3.0 } },
-		{ "Mick LaSalle",{ "The Night Listener", 3.0 } },
-		{ "Mick LaSalle",{ "You, Me and Dupree", 2.0 } },
-		{ "Jack Matthews",{ "Lady in the Water", 3.0 } },
-		{ "Jack Matthews",{ "Snakes on a Plane", 4.0 } },
-		{ "Jack Matthews",{ "The Night Listener", 3.0 } },
-		{ "Jack Matthews",{ "Superman Returns", 5.0 } },
-		{ "Jack Matthews",{ "You, Me and Dupree", 3.5 } },
-		{ "Toby",{ "Snakes on a Plane", 4.5 } },
-		{ "Toby",{ "You, Me and Dupree", 1.0 } },
-		{ "Toby",{ "Superman Returns", 4.0 } } };
-	return critics;
-}
-
-//class A {
-//public:
-//	boost::python::list mylist;
-//	void listOperation(boost::python::list& l);
-//};
-//#include <list>
-//#include <tuple>
-//
-//void A::listOperation(boost::python::list& l) {
-//	// Extract first element of first tuple in the list.
-//	std::list<int> mylist;
-//	std::tuple<int,int> n = extract<std::tuple<int,int>>(l[0]);
-//	//mylist = extract<std::list<int>>(l);
-//
-//}
-
-#include <boost/python/suite/indexing/map_indexing_suite.hpp>
-#include <boost/python/raw_function.hpp>
-
-typedef std::multimap<std::string, std::pair<string,double>> MyMap;
-namespace python = boost::python;
-
 class myClass {
 public:
-	object SetParameters(python::tuple args, python::dict kwargs);
+	static python::object SetParameters(python::tuple args, python::dict kwargs);
 };
-#include <list>
-object SetParameters(python::tuple args, python::dict kwargs)
+
+python::object myClass::SetParameters(python::tuple args, python::dict kwargs)
 {
 	python::list keys = kwargs.keys();
-	MyMap outMap;
+	Critics critics;
 
 	for (int i = 0; i < len(keys); ++i) 
 	{
-		string key(extract<string>(kwargs.keys()[0]));
+		string key(python::extract<string>(kwargs.keys()[0]));
 		auto curArg = static_cast<python::dict>(kwargs[keys[i]]);
 		if (curArg)
 		{
-			string s = std::move(extract<string>(curArg.keys()[0]));
-			double  d = std::move(extract<double>(curArg.values()[0]));
-			outMap.insert(make_pair(key,make_pair(s, d)));
+			string s = std::move(python::extract<string>(curArg.keys()[0]));
+			double  d = std::move(python::extract<double>(curArg.values()[0]));
+			critics.insert(make_pair(key,make_pair(s, d)));
 		}
 	}
 
 	python::tuple vals = python::make_tuple(args[1]);
-	python::dict dvals = extract<python::dict>(vals[0]);
+	python::dict dvals = python::extract<python::dict>(vals[0]);
 	keys = dvals.keys();
 
 	for (int i = 0; i < len(keys); ++i)
 	{
-		string key(extract<string>(dvals.keys()[i]));
 		auto curArg = static_cast<python::dict>(dvals[keys[i]]);
 		if (curArg)
 		{
+			string key(python::extract<string>(dvals.keys()[i]));
 			for (int j = 0; j < len(curArg); ++j)
 			{
-				string s = std::move(extract<string>(curArg.keys()[j]));
-				double  d = std::move(extract<double>(curArg.values()[j]));
-				outMap.insert(make_pair(key, make_pair(s, d)));
+				string s = move(python::extract<string>(curArg.keys()[j]));
+				double  d = move(python::extract<double>(curArg.values()[j]));
+				critics.insert(make_pair(key, make_pair(s, d)));
 			}
 		}
 	}
 
-	for (auto& e1 : outMap)
+	for (auto& e1 : critics)
 		cout << e1.first << " " << e1.second.first << " " << e1.second.second << endl;
 
-	return object();
+	return python::object();
 }
 
 BOOST_PYTHON_MODULE(ml_ext)
 {
-	class_<myClass>("myClass")
-		.def("SetParameters", raw_function(SetParameters, 1));
+	python::class_<myClass>("myClass")
+		.def("SetParameters", python::raw_function(&myClass::SetParameters));
 
-	//class_<A>("A")
-	//	.def_readwrite("b", &A::mylist)
-	//	.def("op", &A::listOperation)
-	//	;
-
-	//class_<World>("World", init<std::string>())
-	//	.def("greet", &World::greet)
-	//	.def("set", &World::set);
-
-	//class_<Recommendation>("Recommendation", init<PreferenceMMapT&>())
-	//	.def("find_common", &Recommendation::find_common)
-	//	.def("sim_distance", &Recommendation::sim_distance)
-	//	.def("sim_pearson", &Recommendation::sim_pearson)
-	//	.def("topMatches", &Recommendation::topMatches)
-	//	.def("all_names", &Recommendation::all_names)
-	//	.def("all_movies", &Recommendation::all_movies)
-	//	.def("getRecommendations", &Recommendation::getRecommendations)
-	//	.def("transformPrefs", &Recommendation::transformPrefs)
-	//	.def("calculateSimilarItems", &Recommendation::calculateSimilarItems)
-	//	.def("getRecommendedItems", &Recommendation::getRecommendedItems)
-	//	.def("buildDict", &Recommendation::buildDict);
+	python::class_<Recommendation>("Recommendation", 
+		python::init<const python::dict&>())
+		.def("find_common", &Recommendation::find_common)
+		.def("sim_distance", &Recommendation::sim_distance)
+		.def("sim_pearson", &Recommendation::sim_pearson)
+		.def("topMatches", &Recommendation::topMatches)
+		.def("all_names", &Recommendation::all_names)
+		.def("all_movies", &Recommendation::all_movies)
+		.def("getRecommendations", &Recommendation::getRecommendations)
+		.def("transformPrefs", &Recommendation::transformPrefs)
+		.def("calculateSimilarItems", &Recommendation::calculateSimilarItems)
+		.def("getRecommendedItems", &Recommendation::getRecommendedItems)
+		.add_property("critics_p", &Recommendation::get)
+		;
 }

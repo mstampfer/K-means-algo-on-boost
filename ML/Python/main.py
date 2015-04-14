@@ -1,17 +1,16 @@
 import ml_ext
 
-
 #a = ml_ext.A()
 #a.b = [(1,2),(3,4),(5,6)]
 ##a.b = [1,2,3,4,5]
 #print(a.b)
-
 #a.op(a.b)
 
-A = ml_ext.myClass();
-a2 = {"a2":2.2}
-d2 = {"d2":4.3}
-b2 = {"a2":9.3}
+#A = ml_ext.myClass();
+#a2 = {"a2":2.2}
+#d2 = {"d2":4.3}
+#b2 = {"a2":9.3}
+#A.SetParameters(critics)
 
 critics={'Lisa Rose': {'Lady in the Water': 2.5, 
 					   'Snakes on a Plane': 3.5,
@@ -50,10 +49,7 @@ critics={'Lisa Rose': {'Lady in the Water': 2.5,
 			  'Superman Returns':4.0}
 	 }
 
-A.SetParameters(critics, a = a2, d = d2, b = b2)
-
-#planet = ml_ext.World('Hi!')
-#print(planet.greet())
-
-#critics = ml_ext.Recommendation.buildDict()
-pass
+rec = ml_ext.Recommendation(critics)
+rec.critics_p
+print(rec.sim_distance('Lisa Rose','Gene Seymour'))
+print(rec.sim_pearson('Lisa Rose','Gene Seymour'))
