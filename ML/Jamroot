@@ -24,10 +24,23 @@ python-extension ml_ext
    ML/util.cpp 
   ;
 
+#install convenient_copy 
+#  : ml_ext 
+#  : <install-dependencies>on 
+#    <install-type>SHARED_LIB 
+#    <install-type>PYTHON_EXTENSION 
+#    <location>. 
+#  ;
+
+
+python-extension playground 
+  : BoostPythonPlayground/playground.cpp 
+  ;
+
 install convenient_copy 
-  : ml_ext 
+  : playground 
   : <install-dependencies>on 
     <install-type>SHARED_LIB 
     <install-type>PYTHON_EXTENSION 
     <location>. 
-  ;
+;

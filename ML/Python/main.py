@@ -1,17 +1,5 @@
 import ml_ext
 
-#a = ml_ext.A()
-#a.b = [(1,2),(3,4),(5,6)]
-##a.b = [1,2,3,4,5]
-#print(a.b)
-#a.op(a.b)
-
-#A = ml_ext.myClass();
-#a2 = {"a2":2.2}
-#d2 = {"d2":4.3}
-#b2 = {"a2":9.3}
-#A.SetParameters(critics)
-
 critics={'Lisa Rose': {'Lady in the Water': 2.5, 
 					   'Snakes on a Plane': 3.5,
 					   'Just My Luck': 3.0, 
@@ -53,3 +41,4 @@ rec = ml_ext.Recommendation(critics)
 rec.critics_p
 print(rec.sim_distance('Lisa Rose','Gene Seymour'))
 print(rec.sim_pearson('Lisa Rose','Gene Seymour'))
+

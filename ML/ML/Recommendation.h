@@ -13,6 +13,7 @@ using SortedPrefs = map < const double, string, greater<double>>;
 typedef multimap<const string, PreferenceT> Critics;
 namespace python = boost::python;
 
+
 class Recommendation
 {
 private:

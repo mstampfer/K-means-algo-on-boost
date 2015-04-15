@@ -9,8 +9,6 @@
 #include <fstream>
 #include <regex>
 
-#include <boost/python/raw_function.hpp>
-
 #include "Recommendation.h"
 #include "util.h"
 
@@ -280,58 +278,8 @@ SortedPrefs Recommendation::getRecommendedItems(
 	return rankings;
 }
 
-class myClass {
-public:
-	static python::object SetParameters(python::tuple args, python::dict kwargs);
-};
-
-python::object myClass::SetParameters(python::tuple args, python::dict kwargs)
-{
-	python::list keys = kwargs.keys();
-	Critics critics;
-
-	for (int i = 0; i < len(keys); ++i) 
-	{
-		string key(python::extract<string>(kwargs.keys()[0]));
-		auto curArg = static_cast<python::dict>(kwargs[keys[i]]);
-		if (curArg)
-		{
-			string s = std::move(python::extract<string>(curArg.keys()[0]));
-			double  d = std::move(python::extract<double>(curArg.values()[0]));
-			critics.insert(make_pair(key,make_pair(s, d)));
-		}
-	}
-
-	python::tuple vals = python::make_tuple(args[1]);
-	python::dict dvals = python::extract<python::dict>(vals[0]);
-	keys = dvals.keys();
-
-	for (int i = 0; i < len(keys); ++i)
-	{
-		auto curArg = static_cast<python::dict>(dvals[keys[i]]);
-		if (curArg)
-		{
-			string key(python::extract<string>(dvals.keys()[i]));
-			for (int j = 0; j < len(curArg); ++j)
-			{
-				string s = move(python::extract<string>(curArg.keys()[j]));
-				double  d = move(python::extract<double>(curArg.values()[j]));
-				critics.insert(make_pair(key, make_pair(s, d)));
-			}
-		}
-	}
-
-	for (auto& e1 : critics)
-		cout << e1.first << " " << e1.second.first << " " << e1.second.second << endl;
-
-	return python::object();
-}
-
 BOOST_PYTHON_MODULE(ml_ext)
 {
-	python::class_<myClass>("myClass")
-		.def("SetParameters", python::raw_function(&myClass::SetParameters));
-
 	python::class_<Recommendation>("Recommendation", 
 		python::init<const python::dict&>())
 		.def("find_common", &Recommendation::find_common)
