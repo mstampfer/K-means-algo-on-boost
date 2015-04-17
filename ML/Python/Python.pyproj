@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ab1c872a-d68e-4491-a01d-0ceb1a99f28e</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>main.py</StartupFile>
+    <StartupFile>sandbox.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>c:\work\MachineLearning2\ML</WorkingDirectory>
@@ -35,9 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="main.py" />
-    <Compile Include="playground.py">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="sandbox.py" />
   </ItemGroup>
   <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />
   <Import Condition="!Exists($(PtvsTargetsFile))" Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
