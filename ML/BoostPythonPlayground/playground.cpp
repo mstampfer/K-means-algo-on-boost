@@ -14,6 +14,11 @@
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/python/exception_translator.hpp>
+#include <boost/python/args.hpp>
+#include <boost/python/tuple.hpp>
+#include <boost/python/class.hpp>
+#include <boost/python/overloads.hpp>
+#include <boost/python/return_internal_reference.hpp>
 
 using namespace std;
 namespace python = boost::python;
@@ -27,6 +32,8 @@ public:
 	static python::object testDict(python::tuple args, python::dict kwargs);
 	static void sequence_to_int_list(const python::object& ob);
 	static python::object choose_function(bool selector);
+	enum struct color;
+	static color identity_(color x);
 };
 
 python::object myClass::SetParameters(python::tuple args, python::dict kwargs)
@@ -78,7 +85,7 @@ python::object myClass::testDict(python::tuple args, python::dict kwargs)
 	{
 		python::list l = kwargs.items();
 		python::stl_input_iterator<python::tuple> begin(l), end;
-		list<python::tuple> li = list<python::tuple>(begin, end);
+		std::list<python::tuple> li = std::list<python::tuple>(begin, end);
 		std::transform(li.begin(), li.end(), inserter(m, m.end()), [](auto& e)
 		{
 			string s(move(python::extract<string>(e[0])));
@@ -95,7 +102,7 @@ python::object myClass::testDict(python::tuple args, python::dict kwargs)
 		python::dict d = python::extract<python::dict>(vals[0]);
 		python::list l = d.items();
 		python::stl_input_iterator<python::tuple> begin(l), end;
-		list<python::tuple> li = list<python::tuple>(begin, end);
+		std::list<python::tuple> li = std::list<python::tuple>(begin, end);
 		std::transform(li.begin(), li.end(), inserter(mm, mm.end()), [&](auto& e)
 		{
 			python::dict dct = python::extract<python::dict>(e[1]);
@@ -130,7 +137,7 @@ char const* foo(int x, int y) { return "foo"; }
 
 class my_def_visitor : python::def_visitor<my_def_visitor>
 {
-	friend class def_visitor_access;
+	friend class python::def_visitor_access;
 
 	template <class classT>
 	void visit(classT& c) const
@@ -143,9 +150,9 @@ class my_def_visitor : python::def_visitor<my_def_visitor>
 
 };
 
-enum color { red = 1, green = 2, blue = 4 };
 
-color identity_(color x) { return x; }
+enum struct myClass::color { red, green, blue };
+myClass::color myClass::identity_(color x) { return x; }
 
 struct my_exception : std::exception
 {
@@ -162,8 +169,11 @@ void something_which_throws()
 {
 		throw my_exception();
 }
+using namespace boost::python;
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(f_member_overloads, f, 1, 3)
 
+struct Y {};
 struct X
 {
 	void f() {}
@@ -171,23 +181,7 @@ struct X
 	struct Y { int g() { return 42; } };
 };
 
-BOOST_PYTHON_MODULE(nested)
-{
-	// add some constants to the current (module) scope
-	python::scope().attr("yes") = 1;
-	python::scope().attr("no") = 0;
 
-	// Change the current scope 
-	python::scope outer
-		= python::class_<X>("X")
-		.def("f", &X::f)
-		;
-
-	// Define a class Y in the current scope, X
-	python::class_<X::Y>("Y")
-		.def("g", &X::Y::g)
-		;
-}
 BOOST_PYTHON_MODULE(playground)
 {
 	python::class_<myClass>("myClass")
@@ -196,14 +190,13 @@ BOOST_PYTHON_MODULE(playground)
 		.def("sequence_to_int_list", &myClass::sequence_to_int_list)
 		.def("choose_function", &myClass::choose_function)
 		;
-	python::enum_<color>("color")
-		.value("red", red)
-		.value("green", green)
-		.export_values()
-		.value("blue", blue)
+	python::enum_<myClass::color>("color")
+		.value("red", myClass::color::red)
+		.value("green", myClass::color::green)
+		.value("blue", myClass::color::blue)
 		;
-
-	python::def("identity", identity_);
+	
+	python::def("identity", &myClass::identity_);
 	
 	python::def("foo", foo, python::args("x", "y"), "foo's docstring");
 
@@ -225,4 +218,15 @@ BOOST_PYTHON_MODULE(playground)
 	python::class_<X::Y>("Y")
 		.def("g", &X::Y::g)
 		;
+
+	class_<Y>("Y")
+		;
+
+	//class_<X>("X", "This is X's docstring")
+	//	.def("f", &X::f,
+	//	f_member_overloads(
+	//	args("x", "y", "z"), "f's docstring"
+	//	)[return_internal_reference<>()]
+	//	)
+	//	;
 }

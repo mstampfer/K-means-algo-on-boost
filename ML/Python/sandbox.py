@@ -1,4 +1,5 @@
 import playground
+import os
 
 
 
@@ -24,24 +25,23 @@ critics={
 #print(g())
 #playground.myClass.sequence_to_int_list([1,2,3,4,5,7])
 
-##print(playground.foo(1,1).__doc__)
-
-#print(playground.identity(playground.color.red))
+##print(playground.foo(1,1).__doc__
+print(playground.identity(playground.color.red))
 
 #print(playground.identity(playground.green))
 
-#print(playground.identity(playground.color.green))
+print(playground.identity(playground.color.green))
 
-##print(playground.identity(playground.blue))
-#print(playground.identity(playground.color.blue))
+#print(playground.identity(playground.blue))
+print(playground.identity(playground.color.blue))
 
-#print(playground.identity(playground.color(1)))
+print(playground.identity(playground.color(1)))
 
-#print(playground.identity(playground.color(2)))
+print(playground.identity(playground.color(2)))
 
-#print(playground.identity(playground.color(3)))
+print(playground.identity(playground.color(3)))
 
-#print(playground.identity(playground.color(4)))
+print(playground.identity(playground.color(4)))
 
 ##playground.something_which_throws();
 
@@ -49,5 +49,4 @@ critics={
 #print(playground.yes)
 #y = playground.X.Y()
 #print(y.g())
-
 playground.myClass().testDict(critics)

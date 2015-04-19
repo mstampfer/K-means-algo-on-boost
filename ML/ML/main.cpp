@@ -91,7 +91,7 @@ auto loadMovieLens(const string& path)
 //	Recommendation rec(critics);
 //	function<double(
 //		const string &,
-//		const string &)> similarity = bind(&Recommendation::sim_pearson, rec, _1, _2);
+//		const string &)> similarity  =bind(&Recommendation::sim_pearson, rec, _1, _2);
 //
 //	cout << rec.sim_distance("Lisa Rose", "Gene Seymour") << endl;
 //	

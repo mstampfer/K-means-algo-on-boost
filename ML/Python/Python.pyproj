@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ab1c872a-d68e-4491-a01d-0ceb1a99f28e</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>sandbox.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>c:\work\MachineLearning2\ML</WorkingDirectory>
@@ -16,10 +16,10 @@
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
     <Environment>PYTHONPATH=c:\work\MachineLearning2\ML</Environment>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <InterpreterId>
-    </InterpreterId>
-    <InterpreterVersion>
-    </InterpreterVersion>
+    <InterpreterId>{97080039-d6dd-4ca9-b8bd-fee6b4d2771d}</InterpreterId>
+    <InterpreterVersion>3.5</InterpreterVersion>
+    <InterpreterPath>
+    </InterpreterPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,6 +36,9 @@
   <ItemGroup>
     <Compile Include="main.py" />
     <Compile Include="sandbox.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{97080039-d6dd-4ca9-b8bd-fee6b4d2771d}\3.5" />
   </ItemGroup>
   <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />
   <Import Condition="!Exists($(PtvsTargetsFile))" Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />

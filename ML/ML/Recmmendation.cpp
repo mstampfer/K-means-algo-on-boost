@@ -50,6 +50,19 @@ python::dict Recommendation::get()
 	return critics_p;
 }
 
+enum struct Recommendation::Similarity  {sim_distance, sim_pearson};
+auto Recommendation::Func(const Similarity& sim)
+{
+	if (sim == Similarity::sim_distance)
+	{
+		return bind(&Recommendation::sim_distance, *this, _1, _2);
+	}
+	if (sim == Similarity::sim_pearson)
+	{
+		return bind(&Recommendation::sim_pearson, *this, _1, _2);
+	}
+}
+
 auto Recommendation::find_common(const string &person1, const string &person2)
 {
 	CommonPrefMapT common_items;
@@ -105,8 +118,8 @@ double Recommendation::sim_pearson(const string& person1, const string& person2)
 	return Util::pearson(items);
 }
 
-// Returns the best matches for person from the prefs dictionary.
-// Number of results and similarity function are optional params.
+ //Returns the best matches for person from the prefs dictionary.
+ //Number of results and similarity function are optional params.
 SortedPrefs Recommendation::topMatches(
 	const string &person,
 	function<double(
@@ -120,6 +133,18 @@ SortedPrefs Recommendation::topMatches(
 			scores.insert(make_pair(f_sim(), pref.first));
 	});
 	return scores;
+}
+
+python::dict Recommendation::topMatchesWrapper(
+	const string& person,
+	const Similarity& similarity)
+{
+	python::dict d;
+	auto scores = topMatches(person, Func(similarity));
+	for_each(scores.cbegin(), scores.cend(), [&d](auto& score){
+		d[score.first] = score.second;
+	});
+	return d;
 }
 
 auto Recommendation::all_names()
@@ -279,13 +304,13 @@ SortedPrefs Recommendation::getRecommendedItems(
 }
 
 BOOST_PYTHON_MODULE(ml_ext)
-{
+{ 
 	python::class_<Recommendation>("Recommendation", 
 		python::init<const python::dict&>())
 		.def("find_common", &Recommendation::find_common)
 		.def("sim_distance", &Recommendation::sim_distance)
 		.def("sim_pearson", &Recommendation::sim_pearson)
-		.def("topMatches", &Recommendation::topMatches)
+		.def("topMatches", &Recommendation::topMatchesWrapper)
 		.def("all_names", &Recommendation::all_names)
 		.def("all_movies", &Recommendation::all_movies)
 		.def("getRecommendations", &Recommendation::getRecommendations)
@@ -293,5 +318,9 @@ BOOST_PYTHON_MODULE(ml_ext)
 		.def("calculateSimilarItems", &Recommendation::calculateSimilarItems)
 		.def("getRecommendedItems", &Recommendation::getRecommendedItems)
 		.add_property("critics_p", &Recommendation::get)
+		;
+	python::enum_<Recommendation::Similarity>("Similarity")
+		.value("distance", Recommendation::Similarity::sim_distance)
+		.value("sim_pearson", Recommendation::Similarity::sim_pearson)
 		;
 }

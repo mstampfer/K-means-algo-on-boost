@@ -1,4 +1,5 @@
 import ml_ext
+import pprint
 
 critics={'Lisa Rose': {'Lady in the Water': 2.5, 
 					   'Snakes on a Plane': 3.5,
@@ -36,9 +37,12 @@ critics={'Lisa Rose': {'Lady in the Water': 2.5,
 			  'You, Me and Dupree':1.0,
 			  'Superman Returns':4.0}
 	 }
-
 rec = ml_ext.Recommendation(critics)
 rec.critics_p
 print(rec.sim_distance('Lisa Rose','Gene Seymour'))
 print(rec.sim_pearson('Lisa Rose','Gene Seymour'))
+tm =rec.topMatches('Toby', ml_ext.Similarity.distance)
+pprint.pprint(tm)
+pass
+
 
