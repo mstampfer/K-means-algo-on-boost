@@ -5,9 +5,10 @@
 #include <set>
 #include <iostream>
 #include <random>
+#include <list>
 
 #include "cluster.h"
-#include "util.h"
+#include "Recommendation.h"
 
 using namespace placeholders;
 
@@ -50,7 +51,14 @@ auto readfile(const string& path,
 Bicluster::Bicluster() :
 	id(0), vec(vector<double>()), left(nullptr), right(nullptr), dist(0.0) {}
 
-Bicluster::Bicluster(const int id, 
+Bicluster::Bicluster(const unique_ptr<Bicluster>& rhs) :
+	id(rhs->id), 
+	vec(rhs->vec), 
+	left(new Bicluster(rhs->left)), 
+	right(new Bicluster(rhs->right)), 
+	dist(rhs->dist) {}
+
+Bicluster::Bicluster(const int id,
 	const vector<double>& vec,
 	unique_ptr<Bicluster> left = nullptr,
 	unique_ptr<Bicluster> right = nullptr,
@@ -58,6 +66,44 @@ Bicluster::Bicluster(const int id,
 	 :
 	id(id), vec(vec), left(move(left)), right(move(right)), dist(distance)
 {}
+
+Bicluster::Bicluster(const Bicluster& rhs) : 
+	vec(rhs.vec) ,
+	id(rhs.id),
+	dist(rhs.dist),
+	left(new Bicluster(rhs.left)),
+	right(new Bicluster(rhs.right))
+{
+}
+
+Bicluster& Bicluster::operator=(const Bicluster& rhs) 
+{
+	vec = rhs.vec;
+	left = make_unique<Bicluster>(rhs.left);
+	right = make_unique<Bicluster>(rhs.right);
+	id = rhs.id;
+	dist = rhs.dist;
+	return *this;
+}
+
+// boost-python does not support move semantics
+Bicluster::Bicluster(Bicluster&&rhs ) :
+	vec(move(rhs.vec)),
+	left(move(rhs.left)),
+	right(move(rhs.right)),
+	id(move(rhs.id)),
+	dist(move(rhs.dist))
+{}
+
+Bicluster& Bicluster::operator=(Bicluster&& rhs) 
+{
+	vec = move(rhs.vec);
+	left = move(rhs.left);
+	right = move(rhs.right);
+	id = move(rhs.id);
+	dist = move(rhs.dist);
+	return *this;
+}
 
 double Bicluster::cluster_pearson(const vector<double>& v1, const vector<double>& v2)
 {
@@ -85,7 +131,8 @@ auto Bicluster::hcluster(const vector<vector<double>>& rows,
 	//	Clusters are initially just the rows
 	for (const auto& row : rows)
 	{
-		clusters.emplace_back(cid++, row);
+		Bicluster bc(cid++, row);
+		clusters.push_back(move(bc));
 	}
 
 	while (clusters.size() > 1)
@@ -124,11 +171,13 @@ auto Bicluster::hcluster(const vector<vector<double>>& rows,
 			}
 
 			//create the new cluster
-			clusters.emplace_back(currentclustid,
+			Bicluster bc(currentclustid,
 				mergevec,
 				make_unique<Bicluster>(move(clusters[lowestpairv[0]])),
 				make_unique<Bicluster>(move(clusters[lowestpairv[1]])),
 				closest);
+			
+			clusters.push_back(move(bc));
 
 			//remove merged clusters
 			for (const auto& e : lowestpair)
@@ -169,7 +218,7 @@ void Bicluster::printclust(const Bicluster& cluster, const vector<string>& label
 }
 
 auto Bicluster::kcluster(const vector<vector<double>>& rows,
-	function<double(const vector<double>&, const vector<double>&)> simularity,
+	/*function<double(const vector<double>&, const vector<double>&)> simularity,*/
 	unsigned k
 	)
 {
@@ -243,20 +292,61 @@ auto Bicluster::kcluster(const vector<vector<double>>& rows,
 	return bestmatches;
 }
 
-int main()
+auto Bicluster::Func(const Util::Similarity& sim)
 {
-	const string& path("C:\\work\\MachineLearning2");
-	vector<string> colnames, rownames;
-	vector<vector<double>> data;
-	readfile(path, colnames, rownames, data);
-	Bicluster cluster;
-	function<double(const vector<double>&,
-		const vector<double>&)> similarity = bind(&Bicluster::cluster_pearson, ref(cluster), std::placeholders::_1, std::placeholders::_2);
-	//auto clusters = cluster.hcluster(data, similarity);
-	//clusters.printclust(clusters, rownames);
-	auto clust = cluster.kcluster(data, similarity);
-	for (const auto& r : Util::range(10))
-		for (const auto& j : clust[r])			
-			cout << rownames[clust[r][j]] << endl;
-		cout << endl;
+	if (sim == Util::Similarity::sim_distance)
+	{
+		return bind(&Bicluster::distance, *this, placeholders::_1, placeholders::_2);
+	}
+	if (sim == Util::Similarity::sim_pearson)
+	{
+		return bind(&Bicluster::cluster_pearson, *this, placeholders::_1, placeholders::_2);
+	}
 }
+
+auto Bicluster::kclusterwrapper(const python::list& data, const Util::Similarity& sim, int k)
+{
+	vector<vector<double>> ldata;
+	python::stl_input_iterator<python::list> begin(data), end;
+	vector<python::list> li = vector<python::list>(begin, end);
+	transform(li.begin(), li.end(), inserter(ldata, ldata.end()), [&](auto& e)
+	{
+		python::stl_input_iterator<double> begin(e), end;
+		vector<double> li2 = vector<double>(begin, end);
+		return li2;
+	});
+	kcluster(ldata, /*Bicluster::Func(sim),*/ k);
+
+	return 1;
+}
+BOOST_PYTHON_MODULE(cluster)
+{
+	python::class_<Bicluster>("Bicluster")
+		.def("cluster_pearson", &Bicluster::cluster_pearson)
+		.def("hcluster", &Bicluster::hcluster)
+		.def("kcluster", &Bicluster::kclusterwrapper)
+		.def("printclust", &Bicluster::printclust)
+		;
+	python::enum_<Util::Similarity>("Similarity")
+		.value("distance", Util::Similarity::sim_distance)
+		.value("sim_pearson", Util::Similarity::sim_pearson)
+		;
+}
+
+//int main()
+//{
+//	const string& path("c:\\work\\machinelearning2");
+//	vector<string> colnames, rownames;
+//	vector<vector<double>> data;
+//	readfile(path, colnames, rownames, data);
+//	Bicluster cluster;
+//	function<double(const vector<double>&,
+//		const vector<double>&)> similarity = bind(&Bicluster::cluster_pearson, ref(cluster), std::placeholders::_1, std::placeholders::_2);
+//	//auto clusters = cluster.hcluster(data, similarity);
+//	//clusters.printclust(clusters, rownames);
+//	auto clust = cluster.kcluster(data, similarity);
+//	for (const auto& r : Util::range(10))
+//		for (const auto& j : clust[r])			
+//			cout << rownames[clust[r][j]] << endl;
+//		cout << endl;
+//}

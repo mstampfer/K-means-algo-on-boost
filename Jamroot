@@ -1,0 +1,52 @@
+import python ;
+import os ;
+path-constant BOOST_ROOT : [ os.environ BOOST_ROOT ] ;
+use-project /boost : $(BOOST_ROOT) ;
+
+if ! [ python.configured ]
+{
+    ECHO "notice: no Python configured in user-config.jam" ;
+    ECHO "notice: will use default configuration" ;
+    using python ;
+}
+
+project
+  : requirements 
+		 <library>/boost/python//boost_python 
+                 <implicit-dependency>/boost//headers 
+                 <define>BOOST_ALL_NO_LIB
+  : usage-requirements <implicit-dependency>/boost//headers 
+  ;
+
+python-extension recommendation 
+  : ML/Recommendation.cpp 
+   ML/util.cpp 
+  ;
+
+python-extension cluster 
+  : ML/cluster.cpp 
+   ML/util.cpp 
+   ;
+
+python-extension playground 
+  : BoostPythonPlayground/playground.cpp 
+  ;
+
+python-extension example 
+  : BoostPythonPlayground/example.cpp 
+  ;
+
+rule convenient-copy ( project-name )
+{
+  install convenient_copy_$(project-name) 
+    : $(project-name)
+    : <install-dependencies>on <install-type>SHARED_LIB <install-type>PYTHON_EXTENSION
+      <location>.
+    ;
+}
+
+convenient-copy recommendation ;
+convenient-copy cluster ;
+convenient-copy playground ;
+convenient-copy example ;
+

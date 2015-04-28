@@ -1,4 +1,6 @@
 #pragma once
+#include "util.h"
+
 #include <boost/python/module.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python.hpp>
@@ -15,20 +17,15 @@ using SimilarityPrefMapT = multimap<const string, pair<double, string>>;
 using SortedPrefs = map < const double, string, greater<double>>;
 typedef multimap<const string, PreferenceT> Critics;
 namespace python = boost::python;
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(topmatches_overloads, topMatches, 2, 2)
-
 
 class Recommendation
 {
-public:
-	enum struct Similarity;
-
 private:
 	PreferenceMMapT prefs;
 	const python::dict critics_p;
 	auto itemPairs(const CommonPrefMapT& common);
 	PreferenceMMapT SetParameters(const python::dict& critics);
-	auto Func(const Similarity&);
+	auto Func(const Util::Similarity&);
 
 public:
 	Recommendation(const python::dict&);
@@ -41,7 +38,7 @@ public:
 		const string &person1,
 		const string &person2)> similarity = &sim_pearson);
 	python::dict topMatchesWrapper(const string &person,
-		const Similarity& sim);
+		const Util::Similarity& sim);
 	auto all_names();
 	auto all_movies(const string& person);
 	SortedPrefs getRecommendations(const string &person,
@@ -49,7 +46,7 @@ public:
 		const string &person1,
 		const string &person2)> similarity);
 	python::dict getRecommendationsWrapper(const string& person,
-		const Similarity& similarity);
+		const Util::Similarity& similarity);
 	void transformPrefs();
 	SimilarityPrefMapT calculateSimilarItems();
 	python::dict calculateSimilarItemsWrapper();

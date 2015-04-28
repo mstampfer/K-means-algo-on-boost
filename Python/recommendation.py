@@ -1,4 +1,4 @@
-import ml_ext
+import recommendation
 import pprint
 
 critics={'Lisa Rose': {'Lady in the Water': 2.5, 
@@ -37,20 +37,20 @@ critics={'Lisa Rose': {'Lady in the Water': 2.5,
 			  'You, Me and Dupree':1.0,
 			  'Superman Returns':4.0}
 	 }
-rec = ml_ext.Recommendation(critics)
+rec = recommendation.Recommendation(critics)
 rec.critics_p
 print(rec.sim_distance('Lisa Rose','Gene Seymour'))
 print(rec.sim_pearson('Lisa Rose','Gene Seymour'))
-tm =rec.topMatches('Toby', ml_ext.Similarity.distance)
+tm =rec.topMatches('Toby', recommendation.Similarity.distance)
 pprint.pprint(tm)
 pass
 
-rankings = rec.getRecommendations( "Toby", ml_ext.Similarity.distance)
+rankings = rec.getRecommendations( "Toby", recommendation.Similarity.distance)
 pprint.pprint(rankings)
 pass
 
 rec.transformPrefs()
-tm = rec.topMatches("Superman Returns", ml_ext.Similarity.distance)
+tm = rec.topMatches("Superman Returns", recommendation.Similarity.distance)
 pprint.pprint(tm)
 pass
 
@@ -70,8 +70,6 @@ def loadMovieLens(path='/data/movielens'):
 	prefs={}
 	for line in open(path+'/u.data'):
 		(user,movieid,rating,ts)=line.split('\t')
- 		prefs[user][movies[movieid]]=float(rating)
+		prefs[user][movies[movieid]]=float(rating)
 	return prefs
-
-prefs 
 

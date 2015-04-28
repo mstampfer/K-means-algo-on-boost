@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ab1c872a-d68e-4491-a01d-0ceb1a99f28e</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>main.py</StartupFile>
+    <StartupFile>clusters.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>c:\work\MachineLearning2\ML</WorkingDirectory>
@@ -34,7 +34,12 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="main.py" />
+    <Compile Include="clusters.py" />
+    <Compile Include="downloadzebodata.py" />
+    <Compile Include="generatefeedvector.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="recommendation.py" />
     <Compile Include="sandbox.py" />
   </ItemGroup>
   <ItemGroup>

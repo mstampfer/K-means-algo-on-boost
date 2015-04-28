@@ -11,11 +11,8 @@
 #include <list>
 
 #include "Recommendation.h"
-#include "util.h"
 
 //Recommendation::Recommendation(PreferenceMMapT& prefs) : prefs(prefs) {}
-
-enum struct Recommendation::Similarity { sim_distance, sim_pearson };
 
 Recommendation::Recommendation(const python::dict& critics)
 	: critics_p(critics)
@@ -53,13 +50,13 @@ python::dict Recommendation::get()
 	return critics_p;
 }
 
-auto Recommendation::Func(const Similarity& sim)
+auto Recommendation::Func(const Util::Similarity& sim)
 {
-	if (sim == Similarity::sim_distance)
+	if (sim == Util::Similarity::sim_distance)
 	{
 		return bind(&Recommendation::sim_distance, *this, _1, _2);
 	}
-	if (sim == Similarity::sim_pearson)
+	if (sim == Util::Similarity::sim_pearson)
 	{
 		return bind(&Recommendation::sim_pearson, *this, _1, _2);
 	}
@@ -139,7 +136,7 @@ SortedPrefs Recommendation::topMatches(
 
 python::dict Recommendation::topMatchesWrapper(
 	const string& person,
-	const Similarity& similarity)
+	const Util::Similarity& similarity)
 {
 	python::dict d;
 	auto scores = topMatches(person, Func(similarity));
@@ -221,7 +218,7 @@ SortedPrefs Recommendation::getRecommendations(
 	return rankings;
 }
 
-python::dict Recommendation::getRecommendationsWrapper(const string& person, const Similarity& sim)
+python::dict Recommendation::getRecommendationsWrapper(const string& person, const Util::Similarity& sim)
 {
 	python::dict d;
 	auto rankings = getRecommendations(person, Func(sim));
@@ -355,7 +352,7 @@ python::dict Recommendation::getRecommendedItemsWrapper(
 	return d;
 }
 
-BOOST_PYTHON_MODULE(ml_ext)
+BOOST_PYTHON_MODULE(recommendation)
 {
 	python::class_<Recommendation>("Recommendation",
 		python::init<const python::dict&>())
@@ -371,8 +368,8 @@ BOOST_PYTHON_MODULE(ml_ext)
 		.def("getRecommendedItems2", &Recommendation::getRecommendedItemsWrapper)
 		.add_property("critics_p", &Recommendation::get)
 		;
-	python::enum_<Recommendation::Similarity>("Similarity")
-		.value("distance", Recommendation::Similarity::sim_distance)
-		.value("sim_pearson", Recommendation::Similarity::sim_pearson)
+	python::enum_<Util::Similarity>("Similarity")
+		.value("distance", Util::Similarity::sim_distance)
+		.value("sim_pearson", Util::Similarity::sim_pearson)
 		;
 }

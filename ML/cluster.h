@@ -3,6 +3,16 @@
 #include <map>
 #include <memory>
 
+#pragma once
+#include <boost/python/module.hpp>
+#include <boost/python/def.hpp>
+#include <boost/python.hpp>
+#include <boost/python/overloads.hpp>
+#include <boost/python/stl_iterator.hpp>
+
+#include "util.h"
+
+namespace python = boost::python;
 using namespace std;
 using CommonPrefMapT = multimap<string, pair<double, double>>;
 
@@ -36,19 +46,26 @@ private:
 		return b;
 	};
 
-public:
-	Bicluster();
+	auto Func(const Util::Similarity&);
+
 	Bicluster(const int id,
 		const vector<double>& vec,
 		unique_ptr<Bicluster> left,
 		unique_ptr<Bicluster> right,
 		double distance);
-
+public:
+	Bicluster();
+	Bicluster(const unique_ptr<Bicluster>&);
+	Bicluster(const Bicluster&);
+	Bicluster& operator=(const Bicluster&);
+	Bicluster(Bicluster&&);
+	Bicluster& operator=(Bicluster&&);
+	auto kclusterwrapper(const python::list& data, const Util::Similarity& sim, int k);
 	double cluster_pearson(const vector<double>& v1, const vector<double>& v2);
 	auto hcluster(const vector<vector<double>>& rows,
 		function<double(const vector<double>&, const vector<double>&)> simularity);
 	auto kcluster(const vector<vector<double>>& rows,
-		 function<double(const vector<double>&, const vector<double>&)> simularity,
+		 /*function<double(const vector<double>&, const vector<double>&)> simularity,*/
 		 unsigned n = 10);
 	void printclust(const Bicluster& cluster, const vector<string>& labels, unsigned n);
 };

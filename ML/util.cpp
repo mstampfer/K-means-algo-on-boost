@@ -1,7 +1,6 @@
 //Returns the Pearson correlation coefficient for p1 and p2
 #include "util.h"
 
-
 double Util::distance(const vector<pair<double, double>>& common)
 {
 	auto sum_of_squares = 0.0;
