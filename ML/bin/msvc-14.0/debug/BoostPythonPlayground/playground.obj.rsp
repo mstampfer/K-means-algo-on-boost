@@ -1,0 +1,4 @@
+"BoostPythonPlayground\playground.cpp" -Fo"bin\msvc-14.0\debug\BoostPythonPlayground\playground.obj"    -TP /Z7 /Od /Ob0 /W3 /GR /MDd /Zc:forScope /Zc:wchar_t /wd4675 /EHs -c 
+-DBOOST_ALL_NO_LIB 
+"-IC:\boost_1_55_0" 
+"-IC:\python35\include"

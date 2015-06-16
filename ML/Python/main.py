@@ -45,4 +45,6 @@ tm =rec.topMatches('Toby', ml_ext.Similarity.distance)
 pprint.pprint(tm)
 pass
 
+rankings = rec.getRecommendations( "Toby", ml_ext.Similarity.distance)
+pprint.pprint(rankings)
 
