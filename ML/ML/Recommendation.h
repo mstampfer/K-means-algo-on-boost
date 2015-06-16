@@ -46,6 +46,8 @@ public:
 		function<double(
 		const string &person1,
 		const string &person2)> similarity);
+	python::dict getRecommendationsWrapper(const string& person,
+		const Similarity& similarity);
 	void transformPrefs();
 	SimilarityPrefMapT calculateSimilarItems();
 	SortedPrefs getRecommendedItems(const SimilarityPrefMapT &itemMatch,

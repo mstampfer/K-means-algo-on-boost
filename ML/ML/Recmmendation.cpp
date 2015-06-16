@@ -14,6 +14,8 @@
 
 //Recommendation::Recommendation(PreferenceMMapT& prefs) : prefs(prefs) {}
 
+enum struct Recommendation::Similarity { sim_distance, sim_pearson };
+
 Recommendation::Recommendation(const python::dict& critics)
 	: critics_p(critics)
 {
@@ -50,7 +52,6 @@ python::dict Recommendation::get()
 	return critics_p;
 }
 
-enum struct Recommendation::Similarity  {sim_distance, sim_pearson};
 auto Recommendation::Func(const Similarity& sim)
 {
 	if (sim == Similarity::sim_distance)
@@ -219,6 +220,16 @@ SortedPrefs Recommendation::getRecommendations(
 	return rankings;
 }
 
+python::dict Recommendation::getRecommendationsWrapper(const string& person, const Similarity& sim)
+{
+	python::dict d;
+	auto rankings = getRecommendations(person, Func(sim));
+	for_each(rankings.cbegin(), rankings.cend(), [&d](auto &rank) {
+		d[rank.first] = rank.second;
+	});
+	return d;
+}
+
 void Recommendation::transformPrefs()
 {
 	PreferenceMMapT result;
@@ -313,7 +324,7 @@ BOOST_PYTHON_MODULE(ml_ext)
 		.def("topMatches", &Recommendation::topMatchesWrapper)
 		.def("all_names", &Recommendation::all_names)
 		.def("all_movies", &Recommendation::all_movies)
-		.def("getRecommendations", &Recommendation::getRecommendations)
+		.def("getRecommendations", &Recommendation::getRecommendationsWrapper)
 		.def("transformPrefs", &Recommendation::transformPrefs)
 		.def("calculateSimilarItems", &Recommendation::calculateSimilarItems)
 		.def("getRecommendedItems", &Recommendation::getRecommendedItems)
